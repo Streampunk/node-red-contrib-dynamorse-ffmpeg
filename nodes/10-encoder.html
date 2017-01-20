@@ -25,7 +25,7 @@
         device : { value : "", type : "device", required : true },
         dstFormat: { value : "h264" },
         bitrate : { value : 5000000, validate : RED.validators.number() },
-        gopFrames : { value : 90, validate : RED.validators.number() }
+        gopFrames : { value : 15, validate : RED.validators.number() }
       },
       inputs:1,
       outputs:1,
@@ -68,7 +68,7 @@
   </div>
   <div class="form-row">
     <label for="node-input-gopFrames"><i class="fa fa-clone"></i> GOP frames</label>
-    <input type="number" id="node-input-gopFrames" placeholder="600" style="width: 100px">
+    <input type="number" id="node-input-gopFrames" placeholder="15" style="width: 100px">
   </div>
 </script>
 
