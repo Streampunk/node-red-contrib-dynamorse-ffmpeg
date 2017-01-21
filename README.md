@@ -1,3 +1,4 @@
+[![CircleCI](https://circleci.com/gh/Streampunk/node-red-contrib-dynamorse-ffmpeg.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/Streampunk/node-red-contrib-dynamorse-ffmpeg)
 # node-red-contrib-dynamorse-ffmpeg
 
 A set of nodes for IBM's [Node-RED](http://nodered.org) that support media processing using FFmpeg. This package is a component of Streampunk Media's [dynamorse](https://github.com/Streampunk/node-red-contrib-dynamorse-core#readme) suite.
