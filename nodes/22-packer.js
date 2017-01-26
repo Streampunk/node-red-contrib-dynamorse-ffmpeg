@@ -69,7 +69,7 @@ module.exports = function (RED) {
         packer.quit(function() {
           push(null, x);
         });
-      } else if (Grain.isGrain2(x)) {
+      } else if (Grain.isGrain(x)) {
         if (!this.srcFlow) {
           this.getNMOSFlow(x, function (err, f) {
             if (err) return push("Failed to resolve NMOS flow.");

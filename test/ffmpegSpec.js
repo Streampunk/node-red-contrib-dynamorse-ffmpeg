@@ -35,9 +35,29 @@ var decodeTestNode = JSON.stringify({
   "wires": [[]]
 });
 
+var packerTestNode = JSON.stringify({
+  "type": "packer",
+  "z": TestUtil.testFlowId,
+  "name": "packer-test",
+  "x": 300.0,
+  "y": 100.0,
+  "wires": [[]]
+});  
+
+var converterTestNode = JSON.stringify({
+  "type": "converter",
+  "z": TestUtil.testFlowId,
+  "name": "converter-test",
+  "x": 300.0,
+  "y": 100.0,
+  "wires": [[]]
+});  
+
 var funnelNodeId = "24fde3d7.b7544c";
 var encoderNodeId = "7c968c40.836974";
 var decoderNodeId = "634c3672.78be18";
+var packerNodeId = "145f639d.4b63ac";
+var converterNodeId = "5c14afb6.b1cf3";
 var spoutNodeId = "f2186999.7e5f78";
 
 TestUtil.nodeRedTest('A src->encoder->decoder->spout flow is posted to Node-RED', {
@@ -70,6 +90,84 @@ TestUtil.nodeRedTest('A src->encoder->decoder->spout flow is posted to Node-RED'
   testFlow.nodes[3].id = spoutNodeId;
   testFlow.nodes[3].timeout = params.spoutTimeout;
   testFlow.nodes[3].x = 700.0;
+  return testFlow;
+}, function onMsg(t, params, msgObj, onEnd) {
+  //t.comment(`Message: ${JSON.stringify(msgObj)}`);
+  if (msgObj.hasOwnProperty('receive')) {
+    TestUtil.checkGrain(t, msgObj.receive);
+    params.count++;    
+  }
+  else if (msgObj.hasOwnProperty('end') && (msgObj.src === 'spout')) {
+    t.equal(params.count, params.numPushes, `received end after expected number of pushes`);
+    onEnd();
+  }
+});
+
+TestUtil.nodeRedTest('A src->packer->spout flow is posted to Node-RED', {
+  numPushes: 10,
+  funnelMaxBuffer: 10,
+  packerFmt: 'pgroup',
+  packerMaxBuffer: 10,
+  spoutTimeout: 0
+}, function getFlow(params) {
+  var testFlow = JSON.parse(TestUtil.testNodes.baseTestFlow);
+  testFlow.nodes[0] = JSON.parse(TestUtil.testNodes.funnelGrainNode);
+  testFlow.nodes[0].id = funnelNodeId;
+  testFlow.nodes[0].numPushes = params.numPushes;
+  testFlow.nodes[0].maxBuffer = params.funnelMaxBuffer;
+  testFlow.nodes[0].wires[0][0] = packerNodeId;
+
+  testFlow.nodes[1] = JSON.parse(packerTestNode);
+  testFlow.nodes[1].id = packerNodeId;
+  testFlow.nodes[1].dstFormat = params.packerFmt;
+  testFlow.nodes[1].maxBuffer = params.packerMaxBuffer;
+  testFlow.nodes[1].wires[0][0] = spoutNodeId;
+
+  testFlow.nodes[2] = JSON.parse(TestUtil.testNodes.spoutTestNode);
+  testFlow.nodes[2].id = spoutNodeId;
+  testFlow.nodes[2].timeout = params.spoutTimeout;
+  testFlow.nodes[2].x = 500.0;
+  return testFlow;
+}, function onMsg(t, params, msgObj, onEnd) {
+  //t.comment(`Message: ${JSON.stringify(msgObj)}`);
+  if (msgObj.hasOwnProperty('receive')) {
+    TestUtil.checkGrain(t, msgObj.receive);
+    params.count++;    
+  }
+  else if (msgObj.hasOwnProperty('end') && (msgObj.src === 'spout')) {
+    t.equal(params.count, params.numPushes, `received end after expected number of pushes`);
+    onEnd();
+  }
+});
+
+TestUtil.nodeRedTest('A src->converter->spout flow is posted to Node-RED', {
+  numPushes: 10,
+  funnelMaxBuffer: 10,
+  converterWidth: 1280,
+  converterHeight: 720,
+  converterFmt: 'YUV422P10',
+  converterMaxBuffer: 10,
+  spoutTimeout: 0
+}, function getFlow(params) {
+  var testFlow = JSON.parse(TestUtil.testNodes.baseTestFlow);
+  testFlow.nodes[0] = JSON.parse(TestUtil.testNodes.funnelGrainNode);
+  testFlow.nodes[0].id = funnelNodeId;
+  testFlow.nodes[0].numPushes = params.numPushes;
+  testFlow.nodes[0].maxBuffer = params.funnelMaxBuffer;
+  testFlow.nodes[0].wires[0][0] = converterNodeId;
+
+  testFlow.nodes[1] = JSON.parse(converterTestNode);
+  testFlow.nodes[1].id = converterNodeId;
+  testFlow.nodes[1].dstWidth = params.converterWidth;
+  testFlow.nodes[1].dstHeight = params.converterHeight;
+  testFlow.nodes[1].dstFormat = params.converterFmt;
+  testFlow.nodes[1].maxBuffer = params.converterMaxBuffer;
+  testFlow.nodes[1].wires[0][0] = spoutNodeId;
+
+  testFlow.nodes[2] = JSON.parse(TestUtil.testNodes.spoutTestNode);
+  testFlow.nodes[2].id = spoutNodeId;
+  testFlow.nodes[2].timeout = params.spoutTimeout;
+  testFlow.nodes[2].x = 500.0;
   return testFlow;
 }, function onMsg(t, params, msgObj, onEnd) {
   //t.comment(`Message: ${JSON.stringify(msgObj)}`);
