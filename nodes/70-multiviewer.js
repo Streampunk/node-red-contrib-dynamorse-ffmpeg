@@ -133,7 +133,7 @@ module.exports = function (RED) {
     var dstFlow = null;
     var dstBufLen = 0;
     var nextSrcFlow = 0;
-    var maxQueue = 8;
+    var maxQueue = 2;
     var numEnds = 0;
 
     this.multiviewSetup = RED.nodes.getNode(config.multiviewSetup);
