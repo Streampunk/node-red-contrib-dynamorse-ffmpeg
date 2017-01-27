@@ -134,6 +134,7 @@ module.exports = function (RED) {
     var dstBufLen = 0;
     var nextSrcFlow = 0;
     var maxQueue = 2;
+    var numEnds = 0;
 
     this.multiviewSetup = RED.nodes.getNode(config.multiviewSetup);
     if (!this.multiviewSetup)
@@ -215,9 +216,11 @@ module.exports = function (RED) {
         push(err);
         next();
       } else if (redioactive.isEnd(x)) {
-        stamper.quit(function() {
-          push(null, x);
-        });
+        if (node.srcFlows.length === ++numEnds) {
+          stamper.quit(function() {
+            push(null, x);
+          });
+        }
       } else if (Grain.isGrain(x)) {
         var grainFlowId = uuid.unparse(x.flow_id);
         var slotNum = checkSrcFlowIds(grainFlowId);
