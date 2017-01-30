@@ -32,11 +32,13 @@ module.exports = function (RED) {
     this.multiviewSetup = RED.nodes.getNode(config.multiviewSetup);
 
     if (this.multiviewSetup) {
-      console.log ("Multiview setup - tiles: " + this.multiviewSetup.tiles + ", size: " + this.multiviewSetup.tileWidth + "x" + this.multiviewSetup.tileHeight);
-      config.dstWidth = +this.multiviewSetup.tileWidth;
-      config.dstHeight = +this.multiviewSetup.tileHeight;
-      config.dstFormat = this.multiviewSetup.tileFormat;
-      console.log ("Converter size: " + config.dstWidth + "x" + config.dstHeight + ", format: " + config.dstFormat);
+      setImmediate(function() {
+        console.log ("Multiview setup - tiles: " + this.multiviewSetup.tiles + ", size: " + this.multiviewSetup.tileWidth + "x" + this.multiviewSetup.tileHeight);
+        config.dstWidth = +this.multiviewSetup.tileWidth;
+        config.dstHeight = +this.multiviewSetup.tileHeight;
+        config.dstFormat = this.multiviewSetup.tileFormat;
+        console.log ("Converter size: " + config.dstWidth + "x" + config.dstHeight + ", format: " + config.dstFormat);
+      }.bind(this));
     }
 
     var converter = new codecadon.ScaleConverter(function() {

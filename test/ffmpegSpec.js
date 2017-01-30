@@ -204,7 +204,7 @@ TestUtil.nodeRedTest('A src->converter->spout flow is posted to Node-RED', {
   }
 });
 
-TestUtil.nodeRedTest('A srcx4->converter->mutiviewer->spout flow is posted to Node-RED', {
+TestUtil.nodeRedTest('A (src->converter)x4->mutiviewer->spout flow is posted to Node-RED', {
   numPushes: 10,
   funnelMaxBuffer: 10,
   converterMaxBuffer: 10,
@@ -249,16 +249,6 @@ TestUtil.nodeRedTest('A srcx4->converter->mutiviewer->spout flow is posted to No
   testFlow.nodes[i].y = 400.0;
   testFlow.nodes[i].wires[0][0] = converter4NodeId;
   ++i;
-  testFlow.nodes[i] = JSON.parse(multiviewerTestNode);
-  testFlow.nodes[i].id = multiviewerNodeId;
-  testFlow.nodes[i].dstWidth = params.multiviewerWidth;
-  testFlow.nodes[i].dstHeight = params.multiviewerHeight;
-  testFlow.nodes[i].dstFormat = params.multiviewerFormat;
-  testFlow.nodes[i].multiviewSetup = multiviewerConfigNodeId;
-  testFlow.nodes[i].maxBuffer = params.multiviewerMaxBuffer;
-  testFlow.nodes[i].x = 500.0;
-  testFlow.nodes[i].wires[0][0] = spoutNodeId;
-  ++i;
   testFlow.nodes[i] = JSON.parse(converterTestNode);
   testFlow.nodes[i].id = converter1NodeId;
   testFlow.nodes[i].name = "converter1",
@@ -290,6 +280,16 @@ TestUtil.nodeRedTest('A srcx4->converter->mutiviewer->spout flow is posted to No
   testFlow.nodes[i].maxBuffer = params.converterMaxBuffer;
   testFlow.nodes[i].y = 400.0;
   testFlow.nodes[i].wires[0][0] = multiviewerNodeId;
+  ++i;
+  testFlow.nodes[i] = JSON.parse(multiviewerTestNode);
+  testFlow.nodes[i].id = multiviewerNodeId;
+  testFlow.nodes[i].dstWidth = params.multiviewerWidth;
+  testFlow.nodes[i].dstHeight = params.multiviewerHeight;
+  testFlow.nodes[i].dstFormat = params.multiviewerFormat;
+  testFlow.nodes[i].multiviewSetup = multiviewerConfigNodeId;
+  testFlow.nodes[i].maxBuffer = params.multiviewerMaxBuffer;
+  testFlow.nodes[i].x = 500.0;
+  testFlow.nodes[i].wires[0][0] = spoutNodeId;
   ++i;
   testFlow.nodes[i] = JSON.parse(multiviewerConfigNode);
   testFlow.nodes[i].id = multiviewerConfigNodeId;
