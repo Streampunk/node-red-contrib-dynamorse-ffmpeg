@@ -1,4 +1,4 @@
-/* Copyright 2016 Streampunk Media Ltd.
+/* Copyright 2017 Streampunk Media Ltd.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -30,10 +30,10 @@ module.exports = function (RED) {
     if (!this.context().global.get('updated'))
       return this.log('Waiting for global context updated.');
 
-    var encoder = new codecadon.Encoder(function() {
+    var encoder = new codecadon.Encoder(() => {
       console.log('AAC Encoder exiting');
     });
-    encoder.on('error', function(err) {
+    encoder.on('error', err => {
       console.log('AAC Encoder error: ' + err);
     });
 
@@ -56,7 +56,7 @@ module.exports = function (RED) {
       var curStart = 0;
       var numSrcPkts = 0;
       var numDstPkts = 0;
- 
+
       while (curStart + packetNumBytes - lastBuf.length < x.buffers[0].length) {
         var packet = Buffer.concat([lastBuf, x.buffers[0].slice(curStart, curStart + packetNumBytes - lastBuf.length)], packetNumBytes);
         curStart += packetNumBytes - lastBuf.length;
@@ -64,8 +64,8 @@ module.exports = function (RED) {
           lastBuf = Buffer.alloc(0);
         numSrcPkts++;
 
-        var dstBuf = new Buffer(dstBufLen);
-        var numQueued = encoder.encode([packet], dstBuf, function(err, result) {
+        var dstBuf = Buffer.alloc(dstBufLen);
+        var numQueued = encoder.encode([packet], dstBuf, (err, result) => {
           numDstPkts++;
           if (err) {
             push(err);
@@ -77,12 +77,13 @@ module.exports = function (RED) {
             next();
         });
       }
-      lastBuf = Buffer.concat([lastBuf, x.buffers[0].slice(curStart, x.buffers[0].length)], lastBuf.length + x.buffers[0].length - curStart);
-      if (!numSrcPkts) // this grain didn't fill the encode packet 
+      lastBuf = Buffer.concat([lastBuf, x.buffers[0].slice(curStart, x.buffers[0].length)],
+        lastBuf.length + x.buffers[0].length - curStart);
+      if (!numSrcPkts) // this grain didn't fill the encode packet
         next();
     }
 
-    this.consume(function (err, x, push, next) {
+    this.consume((err, x, push, next) => {
       if (err) {
         push(err);
         next();
@@ -92,7 +93,7 @@ module.exports = function (RED) {
         });
       } else if (Grain.isGrain(x)) {
         if (!this.srcFlow) {
-          this.getNMOSFlow(x, function (err, f) {
+          this.getNMOSFlow(x, (err, f) => {
             if (err) return push("Failed to resolve NMOS flow.");
             this.srcFlow = f;
             var srcTags = this.srcFlow.tags;
@@ -110,7 +111,8 @@ module.exports = function (RED) {
             var bitsPerSample = +srcTags.encodingName[0].substring(1);
             packetNumBytes = 1024 * numChannels * (((bitsPerSample+7) / 8) >>> 0);
 
-            var formattedDstTags = "flow: " + JSON.stringify(dstTags, null, 2) + ", encode settings: " + JSON.stringify(encodeTags, null, 2);
+            var formattedDstTags = "flow: " + JSON.stringify(dstTags, null, 2) +
+              ", encode settings: " + JSON.stringify(encodeTags, null, 2);
             RED.comms.publish('debug', {
               format: "Encoder output flow tags:",
               msg: formattedDstTags
@@ -119,16 +121,16 @@ module.exports = function (RED) {
             dstFlow = new ledger.Flow(null, null, localName, localDescription,
               ledger.formats.audio, dstTags, source.id, null);
 
-            nodeAPI.putResource(source).catch(function(err) {
+            nodeAPI.putResource(source).catch(err => {
               push(`Unable to register source: ${err}`);
             });
-            nodeAPI.putResource(dstFlow).then(function() {
+            nodeAPI.putResource(dstFlow).then(() => {
               dstBufLen = encoder.setInfo(this.srcFlow.tags, dstTags, x.duration, encodeTags);
               processGrain(x, dstBufLen, push, next);
-            }.bind(this), function (err) {
+            }, err => {
               push(`Unable to register flow: ${err}`);
             });
-          }.bind(this));
+          });
         } else {
           processGrain(x, dstBufLen, push, next);
         }
@@ -136,7 +138,7 @@ module.exports = function (RED) {
         push(null, x);
         next();
       }
-    }.bind(this));
+    });
     this.on('close', this.close);
   }
   util.inherits(AACEncoder, redioactive.Valve);

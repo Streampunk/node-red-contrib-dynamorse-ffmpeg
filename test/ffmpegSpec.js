@@ -1,4 +1,4 @@
-/* Copyright 2016 Streampunk Media Ltd.
+/* Copyright 2017 Streampunk Media Ltd.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ var packerTestNode = JSON.stringify({
   "x": 300.0,
   "y": 100.0,
   "wires": [[]]
-});  
+});
 
 var converterTestNode = JSON.stringify({
   "type": "converter",
@@ -51,7 +51,7 @@ var converterTestNode = JSON.stringify({
   "x": 300.0,
   "y": 100.0,
   "wires": [[]]
-});  
+});
 
 var multiviewerTestNode = JSON.stringify({
   "type": "multiviewer",
@@ -60,13 +60,13 @@ var multiviewerTestNode = JSON.stringify({
   "x": 300.0,
   "y": 100.0,
   "wires": [[]]
-});  
+});
 
 var multiviewerConfigNode = JSON.stringify({
   "type": "multiview setup",
   "z": TestUtil.testFlowId,
   "name": "multiview-setup-test"
-});  
+});
 
 var funnel1NodeId = "24fde3d7.b7544c";
 var funnel2NodeId = "ba156ff1.45ea9";
@@ -118,7 +118,7 @@ TestUtil.nodeRedTest('A src->encoder->decoder->spout flow is posted to Node-RED'
   //t.comment(`Message: ${JSON.stringify(msgObj)}`);
   if (msgObj.hasOwnProperty('receive')) {
     TestUtil.checkGrain(t, msgObj.receive);
-    params.count++;    
+    params.count++;
   }
   else if (msgObj.hasOwnProperty('end') && (msgObj.src === 'spout')) {
     t.equal(params.count, params.numPushes, `received end after expected number of pushes`);
@@ -155,7 +155,7 @@ TestUtil.nodeRedTest('A src->packer->spout flow is posted to Node-RED', {
   //t.comment(`Message: ${JSON.stringify(msgObj)}`);
   if (msgObj.hasOwnProperty('receive')) {
     TestUtil.checkGrain(t, msgObj.receive);
-    params.count++;    
+    params.count++;
   }
   else if (msgObj.hasOwnProperty('end') && (msgObj.src === 'spout')) {
     t.equal(params.count, params.numPushes, `received end after expected number of pushes`);
@@ -196,7 +196,7 @@ TestUtil.nodeRedTest('A src->converter->spout flow is posted to Node-RED', {
   //t.comment(`Message: ${JSON.stringify(msgObj)}`);
   if (msgObj.hasOwnProperty('receive')) {
     TestUtil.checkGrain(t, msgObj.receive);
-    params.count++;    
+    params.count++;
   }
   else if (msgObj.hasOwnProperty('end') && (msgObj.src === 'spout')) {
     t.equal(params.count, params.numPushes, `received end after expected number of pushes`);
@@ -304,7 +304,7 @@ TestUtil.nodeRedTest('A (src->converter)x4->mutiviewer->spout flow is posted to 
   //t.comment(`Message: ${JSON.stringify(msgObj)}`);
   if (msgObj.hasOwnProperty('receive')) {
     TestUtil.checkGrain(t, msgObj.receive);
-    params.count++;    
+    params.count++;
   }
   else if (msgObj.hasOwnProperty('end') && (msgObj.src === 'spout')) {
     t.equal(params.count, params.numPushes, `received end after expected number of pushes`);

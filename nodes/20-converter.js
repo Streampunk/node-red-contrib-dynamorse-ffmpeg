@@ -1,4 +1,4 @@
-/* Copyright 2016 Streampunk Media Ltd.
+/* Copyright 2017 Streampunk Media Ltd.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -32,19 +32,19 @@ module.exports = function (RED) {
     this.multiviewSetup = RED.nodes.getNode(config.multiviewSetup);
 
     if (this.multiviewSetup) {
-      setImmediate(function() {
+      setImmediate(() => {
         console.log ("Multiview setup - tiles: " + this.multiviewSetup.tiles + ", size: " + this.multiviewSetup.tileWidth + "x" + this.multiviewSetup.tileHeight);
         config.dstWidth = +this.multiviewSetup.tileWidth;
         config.dstHeight = +this.multiviewSetup.tileHeight;
         config.dstFormat = this.multiviewSetup.tileFormat;
         console.log ("Converter size: " + config.dstWidth + "x" + config.dstHeight + ", format: " + config.dstFormat);
-      }.bind(this));
+      });
     }
 
-    var converter = new codecadon.ScaleConverter(function() {
+    var converter = new codecadon.ScaleConverter(() => {
       console.log('Converter exiting');
     });
-    converter.on('error', function(err) {
+    converter.on('error', err => {
       console.log('Converter error: ' + err);
     });
 
@@ -61,8 +61,8 @@ module.exports = function (RED) {
       ledger.formats.video, null, null, pipelinesID, null);
 
     function processGrain(x, dstBufLen, push, next) {
-      var dstBuf = new Buffer(dstBufLen);
-      var numQueued = converter.scaleConvert(x.buffers, dstBuf, function(err, result) {
+      var dstBuf = Buffer.alloc(dstBufLen);
+      var numQueued = converter.scaleConvert(x.buffers, dstBuf, (err, result) => {
         if (err) {
           push(err);
         } else if (result) {
@@ -73,17 +73,17 @@ module.exports = function (RED) {
       });
     }
 
-    this.consume(function (err, x, push, next) {
+    this.consume((err, x, push, next) => {
       if (err) {
         push(err);
         next();
       } else if (redioactive.isEnd(x)) {
-        converter.quit(function() {
+        converter.quit(() => {
           push(null, x);
         });
       } else if (Grain.isGrain(x)) {
         if (!this.srcFlow) {
-          this.getNMOSFlow(x, function (err, f) {
+          this.getNMOSFlow(x, (err, f) => {
             if (err) return push("Failed to resolve NMOS flow.");
             this.srcFlow = f;
 
@@ -109,16 +109,16 @@ module.exports = function (RED) {
             dstFlow = new ledger.Flow(null, null, localName, localDescription,
               ledger.formats.video, dstTags, source.id, null);
 
-            nodeAPI.putResource(source).catch(function(err) {
+            nodeAPI.putResource(source).catch(err => {
               push(`Unable to register source: ${err}`)
             });
-            nodeAPI.putResource(dstFlow).then(function() {
+            nodeAPI.putResource(dstFlow).then(() => {
               dstBufLen = converter.setInfo(this.srcFlow.tags, dstTags);
               processGrain(x, dstBufLen, push, next);
-            }.bind(this), function (err) {
+            }, err => {
               push(`Unable to register flow: ${err}`);
             });
-          }.bind(this));
+          });
         } else {
           processGrain(x, dstBufLen, push, next);
         }
@@ -126,7 +126,7 @@ module.exports = function (RED) {
         push(null, x);
         next();
       }
-    }.bind(this));
+    });
     this.on('close', this.close);
   }
   util.inherits(Converter, redioactive.Valve);

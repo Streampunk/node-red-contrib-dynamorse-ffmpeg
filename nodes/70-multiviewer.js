@@ -1,4 +1,4 @@
-/* Copyright 2016 Streampunk Media Ltd.
+/* Copyright 2017 Streampunk Media Ltd.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -24,13 +24,13 @@ function Queue() {
   this.entry = function(i) {
     // flip so that the stack appears to be a fifo not a lifo!!
     return this.stack[this.length() - i - 1];
-  } 
+  }
   this.front = function() {
-    return this.entry(0); 
-  } 
+    return this.entry(0);
+  }
   this.dequeue = function() {
-    return this.stack.pop(); 
-  } 
+    return this.stack.pop();
+  }
   this.enqueue = function(item) {
     this.stack.unshift(item);
   }
@@ -45,7 +45,7 @@ function srcSlot(grain, slotNum) {
 }
 
 function dstTile(dstBufBytes, numSlots) {
-  this.dstBuf = new Buffer(dstBufBytes);
+  this.dstBuf = Buffer.alloc(dstBufBytes);
   this.numEmptySlots = numSlots;
 }
 
@@ -110,7 +110,7 @@ multiviewSlots.prototype.setSlotDone = function(dstTile) {
       console.log("Forcing flush of partially complete multiviewer tile");
       frontDstTile.forceAllDone();
     }
-  
+
     if (frontDstTile.isDone()) {
       doneDstTile = this.dstTiles.dequeue();
       for (var i=0; i<this.numSlots; ++i) {
@@ -119,7 +119,7 @@ multiviewSlots.prototype.setSlotDone = function(dstTile) {
     }
   }
 
-  return doneDstTile; 
+  return doneDstTile;
 }
 
 module.exports = function (RED) {
@@ -155,10 +155,10 @@ module.exports = function (RED) {
     if (!this.context().global.get('updated'))
       return this.log('Waiting for global context updated.');
 
-    var stamper = new codecadon.Stamper(function() {
+    var stamper = new codecadon.Stamper(() => {
       console.log('Stamper exiting');
     });
-    stamper.on('error', function(err) {
+    stamper.on('error', err => {
       console.log('Stamper error: ' + err);
     });
 
@@ -186,7 +186,7 @@ module.exports = function (RED) {
         wipeRect:[0, 0, +config.dstWidth, +config.dstHeight],
         wipeCol:[0.0, 0.0, 0.0]
       };
-      stamper.wipe(dstBuf, paramTags, function(err, result) {
+      stamper.wipe(dstBuf, paramTags, (err, result) => {
         if (err)
           console.log(err);
       });
@@ -197,7 +197,7 @@ module.exports = function (RED) {
       if (!dstTile) { next(); return; }
 
       var paramTags = { dstOrg:node.dstOrgs[slotNum] };
-      stamper.copy(x.buffers, dstTile.dstBuf, paramTags, function(err, result) {
+      stamper.copy(x.buffers, dstTile.dstBuf, paramTags, (err, result) => {
         if (err) {
           push(err);
         } else {
@@ -211,13 +211,13 @@ module.exports = function (RED) {
       });
     }
 
-    this.consume(function (err, x, push, next) {
+    this.consume((err, x, push, next) => {
       if (err) {
         push(err);
         next();
       } else if (redioactive.isEnd(x)) {
         if (node.srcFlows.length === ++numEnds) {
-          stamper.quit(function() {
+          stamper.quit(() => {
             push(null, x);
           });
         }
@@ -225,7 +225,7 @@ module.exports = function (RED) {
         var grainFlowId = uuid.unparse(x.flow_id);
         var slotNum = checkSrcFlowIds(grainFlowId);
         if (undefined === slotNum) {
-          this.getNMOSFlow(x, function (err, f) {
+          this.getNMOSFlow(x, (err, f) => {
             if (err) return push("Failed to resolve NMOS flow.");
             slotNum = nextSrcFlow++;
             var firstGrain = this.srcFlows.length === 0;
@@ -256,18 +256,18 @@ module.exports = function (RED) {
               dstFlow = new ledger.Flow(null, null, localName, localDescription,
                 ledger.formats.video, dstTags, source.id, null);
 
-              nodeAPI.putResource(source).catch(function(err) {
+              nodeAPI.putResource(source).catch(err => {
                 push(`Unable to register source: ${err}`)
               });
-              nodeAPI.putResource(dstFlow).then(function() {
+              nodeAPI.putResource(dstFlow).then(() => {
                 processGrain(x, slotNum, push, next);
-              }.bind(this), function (err) {
+              }, err => {
                 push(`Unable to register flow: ${err}`);
               });
             } else {
               processGrain(x, slotNum, push, next);
             }
-          }.bind(this));
+          });
         } else {
           processGrain(x, slotNum, push, next);
         }
@@ -275,7 +275,7 @@ module.exports = function (RED) {
         push(null, x);
         next();
       }
-    }.bind(this));
+    });
     this.on('close', this.close);
   }
   util.inherits(Multiviewer, redioactive.Valve);

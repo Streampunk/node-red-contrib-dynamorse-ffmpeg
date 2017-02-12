@@ -1,4 +1,4 @@
-/* Copyright 2016 Streampunk Media Ltd.
+/* Copyright 2017 Streampunk Media Ltd.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -49,8 +49,8 @@ module.exports = function (RED) {
       ledger.formats.video, null, null, pipelinesID, null);
 
     function processGrain(x, dstBufLen, push, next) {
-      var dstBuf = new Buffer(dstBufLen);
-      var numQueued = encoder.encode(x.buffers, dstBuf, function(err, result) {
+      var dstBuf = Buffer.alloc(dstBufLen);
+      var numQueued = encoder.encode(x.buffers, dstBuf, (err, result) => {
         if (err) {
           push(err);
         } else if (result) {
@@ -61,17 +61,17 @@ module.exports = function (RED) {
       });
     }
 
-    this.consume(function (err, x, push, next) {
+    this.consume((err, x, push, next) => {
       if (err) {
         push(err);
         next();
       } else if (redioactive.isEnd(x)) {
-        encoder.quit(function() {
+        encoder.quit(() => {
           push(null, x);
         });
       } else if (Grain.isGrain(x)) {
         if (!this.srcFlow) {
-          this.getNMOSFlow(x, function (err, f) {
+          this.getNMOSFlow(x, (err, f) => {
             if (err) return push("Failed to resolve NMOS flow.");
             this.srcFlow = f;
 
@@ -93,16 +93,16 @@ module.exports = function (RED) {
             dstFlow = new ledger.Flow(null, null, localName, localDescription,
               ledger.formats.video, dstTags, source.id, null);
 
-            nodeAPI.putResource(source).catch(function(err) {
+            nodeAPI.putResource(source).catch(err => {
               push(`Unable to register source: ${err}`);
             });
-            nodeAPI.putResource(dstFlow).then(function () {
+            nodeAPI.putResource(dstFlow).then(() => {
               dstBufLen = encoder.setInfo(this.srcFlow.tags, dstTags, x.duration, encodeTags);
               processGrain(x, dstBufLen, push, next);
-            }.bind(this), function (err) {
+            }, err => {
               push(`Unable to register flow: ${err}`);
             });
-          }.bind(this));
+          });
         } else {
           processGrain(x, dstBufLen, push, next);
         }
@@ -110,7 +110,7 @@ module.exports = function (RED) {
         push(null, x);
         next();
       }
-    }.bind(this));
+    });
     this.on('close', this.close);
   }
   util.inherits(Encoder, redioactive.Valve);
