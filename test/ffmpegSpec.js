@@ -87,6 +87,8 @@ TestUtil.nodeRedTest('A src->encoder->decoder->spout flow is posted to Node-RED'
   numPushes: 10,
   funnelMaxBuffer: 10,
   encodeFmt: 'h264',
+  encodeBitrate: 5000000,
+  encodeGopFrames: 5,
   encoderMaxBuffer: 10,
   decoderMaxBuffer: 10,
   spoutTimeout: 0
@@ -101,6 +103,8 @@ TestUtil.nodeRedTest('A src->encoder->decoder->spout flow is posted to Node-RED'
   testFlow.nodes[1] = JSON.parse(encodeTestNode);
   testFlow.nodes[1].id = encoderNodeId;
   testFlow.nodes[1].dstFormat = params.encodeFmt;
+  testFlow.nodes[1].bitrate = params.encodeBitrate;
+  testFlow.nodes[1].gopFrames = params.encodeGopFrames;
   testFlow.nodes[1].maxBuffer = params.encoderMaxBuffer;
   testFlow.nodes[1].wires[0][0] = decoderNodeId;
 
