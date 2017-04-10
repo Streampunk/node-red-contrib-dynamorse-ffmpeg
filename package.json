@@ -8,7 +8,7 @@
     "node-red"
   ],
   "dependencies": {
-    "codecadon": "^0.1.1",
+    "codecadon": "^0.1.4",
     "uuid": "^2.0.1"
   },
   "devDependencies": {
