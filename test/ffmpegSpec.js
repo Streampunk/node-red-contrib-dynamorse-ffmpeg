@@ -185,6 +185,8 @@ TestUtil.nodeRedTest('A src->converter->spout flow is posted to Node-RED', {
 
   testFlow.nodes[1] = JSON.parse(converterTestNode);
   testFlow.nodes[1].id = converter1NodeId;
+  testFlow.nodes[1].scaleX = 1.0;
+  testFlow.nodes[1].scaleY = 1.0;
   testFlow.nodes[1].dstWidth = params.converterWidth;
   testFlow.nodes[1].dstHeight = params.converterHeight;
   testFlow.nodes[1].dstFormat = params.converterFmt;
@@ -257,6 +259,8 @@ TestUtil.nodeRedTest('A (src->converter)x4->mutiviewer->spout flow is posted to 
   testFlow.nodes[i].id = converter1NodeId;
   testFlow.nodes[i].name = "converter1",
   testFlow.nodes[i].multiviewSetup = multiviewerConfigNodeId;
+  testFlow.nodes[i].scaleX = 1.0;
+  testFlow.nodes[i].scaleY = 1.0;
   testFlow.nodes[i].maxBuffer = params.converterMaxBuffer;
   testFlow.nodes[i].y = 100.0;
   testFlow.nodes[i].wires[0][0] = multiviewerNodeId;
@@ -265,6 +269,8 @@ TestUtil.nodeRedTest('A (src->converter)x4->mutiviewer->spout flow is posted to 
   testFlow.nodes[i].id = converter2NodeId;
   testFlow.nodes[i].name = "converter2",
   testFlow.nodes[i].multiviewSetup = multiviewerConfigNodeId;
+  testFlow.nodes[i].scaleX = 1.0;
+  testFlow.nodes[i].scaleY = 1.0;
   testFlow.nodes[i].maxBuffer = params.converterMaxBuffer;
   testFlow.nodes[i].y = 200.0;
   testFlow.nodes[i].wires[0][0] = multiviewerNodeId;
@@ -273,6 +279,8 @@ TestUtil.nodeRedTest('A (src->converter)x4->mutiviewer->spout flow is posted to 
   testFlow.nodes[i].id = converter3NodeId;
   testFlow.nodes[i].name = "converter3",
   testFlow.nodes[i].multiviewSetup = multiviewerConfigNodeId;
+  testFlow.nodes[i].scaleX = 1.0;
+  testFlow.nodes[i].scaleY = 1.0;
   testFlow.nodes[i].maxBuffer = params.converterMaxBuffer;
   testFlow.nodes[i].y = 300.0;
   testFlow.nodes[i].wires[0][0] = multiviewerNodeId;
@@ -281,6 +289,8 @@ TestUtil.nodeRedTest('A (src->converter)x4->mutiviewer->spout flow is posted to 
   testFlow.nodes[i].id = converter4NodeId;
   testFlow.nodes[i].name = "converter4",
   testFlow.nodes[i].multiviewSetup = multiviewerConfigNodeId;
+  testFlow.nodes[i].scaleX = 1.0;
+  testFlow.nodes[i].scaleY = 1.0;
   testFlow.nodes[i].maxBuffer = params.converterMaxBuffer;
   testFlow.nodes[i].y = 400.0;
   testFlow.nodes[i].wires[0][0] = multiviewerNodeId;
