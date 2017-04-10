@@ -100,6 +100,10 @@ module.exports = function (RED) {
               dstTags["sampling"] = [ "YCbCr-4:2:2" ];
             }
 
+            scaleTags = {};
+            scaleTags.scale = [ `${config.scaleX}`, `${config.scaleY}`];
+            scaleTags.dstOffset = [ 0, 0 ];
+
             var formattedDstTags = JSON.stringify(dstTags, null, 2);
             RED.comms.publish('debug', {
               format: "Converter output flow tags:",
@@ -113,7 +117,7 @@ module.exports = function (RED) {
               push(`Unable to register source: ${err}`)
             });
             nodeAPI.putResource(dstFlow).then(() => {
-              dstBufLen = converter.setInfo(this.srcFlow.tags, dstTags);
+              dstBufLen = converter.setInfo(this.srcFlow.tags, dstTags, scaleTags);
               processGrain(x, dstBufLen, push, next);
             }, err => {
               push(`Unable to register flow: ${err}`);
