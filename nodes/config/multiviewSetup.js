@@ -18,5 +18,5 @@ module.exports = function(RED) {
     RED.nodes.createNode(this, config);
     this.tiles = config.tiles;
   }
-  RED.nodes.registerType("multiview setup", MultiviewSetup);
-}
+  RED.nodes.registerType('multiview setup', MultiviewSetup);
+};

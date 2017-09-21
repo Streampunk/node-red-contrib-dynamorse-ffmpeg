@@ -8,15 +8,19 @@
     "node-red"
   ],
   "dependencies": {
-    "codecadon": "^0.1.4",
+    "codecadon": "^0.1.9",
     "uuid": "^2.0.1"
   },
   "devDependencies": {
-    "tape": "^4.6.3",
-    "dynamorse-test": "^0.1.1"
+    "dynamorse-test": "^0.1.1",
+    "eslint": "^4.7.1",
+    "tape": "^4.8.0"
   },
   "scripts": {
-    "test": "tape test/*Spec.js"
+    "test": "tape test/*Spec.js",
+    "lint": "eslint **/*.js",
+    "lint-html": "eslint **/*.js -f html -o ./reports/lint-results.html",
+    "lint-fix": "eslint --fix **/*.js"
   },
   "node-red": {
     "nodes": {

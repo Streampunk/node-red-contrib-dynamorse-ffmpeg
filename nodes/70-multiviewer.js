@@ -24,19 +24,19 @@ function Queue() {
   this.entry = function(i) {
     // flip so that the stack appears to be a fifo not a lifo!!
     return this.stack[this.length() - i - 1];
-  }
+  };
   this.front = function() {
     return this.entry(0);
-  }
+  };
   this.dequeue = function() {
     return this.stack.pop();
-  }
+  };
   this.enqueue = function(item) {
     this.stack.unshift(item);
-  }
+  };
   this.length = function() {
     return this.stack.length;
-  }
+  };
 }
 
 function srcSlot(grain, slotNum) {
@@ -52,15 +52,15 @@ function dstTile(dstBufBytes, numSlots) {
 dstTile.prototype.setSlotDone = function() {
   if (this.numEmptySlots > 0)
     --this.numEmptySlots;
-}
+};
 
 dstTile.prototype.forceAllDone = function() {
   this.numEmptySlots = 0;
-}
+};
 
 dstTile.prototype.isDone = function() {
   return 0 === this.numEmptySlots;
-}
+};
 
 function multiviewSlots(numSlots, maxQueue, dstBufBytes) {
   this.numSlots = numSlots;
@@ -78,7 +78,7 @@ multiviewSlots.prototype.addDstTile = function(preWipe) {
   preWipe(newDstTile.dstBuf); // wipe is queued but will be completed before any other operation
   this.dstTiles.enqueue(newDstTile);
   return newDstTile;
-}
+};
 
 multiviewSlots.prototype.addSrcSlot = function(x, slotNum, preWipe) {
   var curQueue = this.slotQueue[slotNum];
@@ -92,22 +92,22 @@ multiviewSlots.prototype.addSrcSlot = function(x, slotNum, preWipe) {
     curDstTile = this.dstTiles.entry(curIndex);
 
   if (0 === curDstTile.numEmptySlots) {
-    console.log("Discarding srcSlot tile " + slotNum + " - dstTile marked as full!!");
+    console.log('Discarding srcSlot tile ' + slotNum + ' - dstTile marked as full!!');
     return;
   }
   curQueue.enqueue(curSrcSlot);
 
   return curDstTile;
-}
+};
 
 multiviewSlots.prototype.setSlotDone = function(dstTile) {
   dstTile.setSlotDone();
 
   var doneDstTile = null;
-  frontDstTile = this.dstTiles.front();
+  var frontDstTile = this.dstTiles.front();
   if (frontDstTile) {
     if ((this.dstTiles.length() > this.maxQueue) && !frontDstTile.isDone()) {
-      console.log("Forcing flush of partially complete multiviewer tile");
+      console.log('Forcing flush of partially complete multiviewer tile');
       frontDstTile.forceAllDone();
     }
 
@@ -120,7 +120,7 @@ multiviewSlots.prototype.setSlotDone = function(dstTile) {
   }
 
   return doneDstTile;
-}
+};
 
 module.exports = function (RED) {
   function Multiviewer (config) {
@@ -138,7 +138,7 @@ module.exports = function (RED) {
 
     this.multiviewSetup = RED.nodes.getNode(config.multiviewSetup);
     if (!this.multiviewSetup)
-      return node.log("Multiviewer setup config not found!!");
+      return node.log('Multiviewer setup config not found!!');
 
     var numTiles = +this.multiviewSetup.tiles;
     var numHTiles = numTiles / 2;
@@ -186,7 +186,7 @@ module.exports = function (RED) {
         wipeRect:[0, 0, +config.dstWidth, +config.dstHeight],
         wipeCol:[0.0, 0.0, 0.0]
       };
-      stamper.wipe(dstBuf, paramTags, (err, result) => {
+      stamper.wipe(dstBuf, paramTags, (err) => {
         if (err)
           console.log(err);
       });
@@ -197,14 +197,14 @@ module.exports = function (RED) {
       if (!dstTile) { next(); return; }
 
       var paramTags = { dstOrg:node.dstOrgs[slotNum] };
-      stamper.copy(x.buffers, dstTile.dstBuf, paramTags, (err, result) => {
+      stamper.copy(x.buffers, dstTile.dstBuf, paramTags, (err) => {
         if (err) {
           push(err);
         } else {
           var doneDstTile = node.mv.setSlotDone(dstTile);
           if (doneDstTile) {
             push(null, new Grain(doneDstTile.dstBuf, x.ptpSync, x.ptpOrigin,
-                                 x.timecode, dstFlow.id, source.id, x.duration));
+              x.timecode, dstFlow.id, source.id, x.duration));
           }
         }
         next();
@@ -226,30 +226,30 @@ module.exports = function (RED) {
         var slotNum = checkSrcFlowIds(grainFlowId);
         if (undefined === slotNum) {
           this.getNMOSFlow(x, (err, f) => {
-            if (err) return push("Failed to resolve NMOS flow.");
+            if (err) return push('Failed to resolve NMOS flow.');
             slotNum = nextSrcFlow++;
             var firstGrain = this.srcFlows.length === 0;
             this.srcFlows[slotNum] = f;
 
             if (firstGrain) {
               var dstTags = JSON.parse(JSON.stringify(f.tags));
-              dstTags["width"] = [ `${config.dstWidth}` ];
-              dstTags["height"] = [ `${config.dstHeight}` ];
-              dstTags["packing"] = [ `${config.dstFormat}` ];
-              if ("420P" === config.dstFormat) {
-                dstTags["depth"] = [ "8" ];
-                dstTags["sampling"] = [ "YCbCr-4:2:0" ];
+              dstTags['width'] = [ `${config.dstWidth}` ];
+              dstTags['height'] = [ `${config.dstHeight}` ];
+              dstTags['packing'] = [ `${config.dstFormat}` ];
+              if ('420P' === config.dstFormat) {
+                dstTags['depth'] = [ '8' ];
+                dstTags['sampling'] = [ 'YCbCr-4:2:0' ];
               }
               else {
-                dstTags["depth"] = [ "10" ];
-                dstTags["sampling"] = [ "YCbCr-4:2:2" ];
+                dstTags['depth'] = [ '10' ];
+                dstTags['sampling'] = [ 'YCbCr-4:2:2' ];
               }
               dstBufLen = stamper.setInfo(f.tags, dstTags);
               node.mv = new multiviewSlots(numTiles, maxQueue, dstBufLen);
 
               var formattedDstTags = JSON.stringify(dstTags, null, 2);
               RED.comms.publish('debug', {
-                format: "Multiviewer output flow tags:",
+                format: 'Multiviewer output flow tags:',
                 msg: formattedDstTags
               }, true);
 
@@ -257,7 +257,7 @@ module.exports = function (RED) {
                 ledger.formats.video, dstTags, source.id, null);
 
               nodeAPI.putResource(source).catch(err => {
-                push(`Unable to register source: ${err}`)
+                push(`Unable to register source: ${err}`);
               });
               nodeAPI.putResource(dstFlow).then(() => {
                 processGrain(x, slotNum, push, next);
@@ -279,5 +279,5 @@ module.exports = function (RED) {
     this.on('close', this.close);
   }
   util.inherits(Multiviewer, redioactive.Valve);
-  RED.nodes.registerType("multiviewer", Multiviewer);
-}
+  RED.nodes.registerType('multiviewer', Multiviewer);
+};

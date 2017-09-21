@@ -33,11 +33,11 @@ module.exports = function (RED) {
 
     if (this.multiviewSetup) {
       setImmediate(() => {
-        console.log ("Multiview setup - tiles: " + this.multiviewSetup.tiles + ", size: " + this.multiviewSetup.tileWidth + "x" + this.multiviewSetup.tileHeight);
+        console.log ('Multiview setup - tiles: ' + this.multiviewSetup.tiles + ', size: ' + this.multiviewSetup.tileWidth + 'x' + this.multiviewSetup.tileHeight);
         config.dstWidth = +this.multiviewSetup.tileWidth;
         config.dstHeight = +this.multiviewSetup.tileHeight;
         config.dstFormat = this.multiviewSetup.tileFormat;
-        console.log ("Converter size: " + config.dstWidth + "x" + config.dstHeight + ", format: " + config.dstFormat);
+        console.log ('Converter size: ' + config.dstWidth + 'x' + config.dstHeight + ', format: ' + config.dstFormat);
       });
     }
 
@@ -48,7 +48,6 @@ module.exports = function (RED) {
       console.log('Converter error: ' + err);
     });
 
-    var node = this;
     var nodeAPI = this.context().global.get('nodeAPI');
     var ledger = this.context().global.get('ledger');
     var localName = config.name || `${config.type}-${config.id}`;
@@ -62,12 +61,12 @@ module.exports = function (RED) {
 
     function processGrain(x, dstBufLen, push, next) {
       var dstBuf = Buffer.alloc(dstBufLen);
-      var numQueued = converter.scaleConvert(x.buffers, dstBuf, (err, result) => {
+      converter.scaleConvert(x.buffers, dstBuf, (err, result) => {
         if (err) {
           push(err);
         } else if (result) {
           push(null, new Grain(result, x.ptpSync, x.ptpOrigin,
-                               x.timecode, dstFlow.id, source.id, x.duration));
+            x.timecode, dstFlow.id, source.id, x.duration));
         }
         next();
       });
@@ -84,29 +83,29 @@ module.exports = function (RED) {
       } else if (Grain.isGrain(x)) {
         if (!this.srcFlow) {
           this.getNMOSFlow(x, (err, f) => {
-            if (err) return push("Failed to resolve NMOS flow.");
+            if (err) return push('Failed to resolve NMOS flow.');
             this.srcFlow = f;
 
             var dstTags = JSON.parse(JSON.stringify(this.srcFlow.tags));
-            dstTags["width"] = [ `${config.dstWidth}` ];
-            dstTags["height"] = [ `${config.dstHeight}` ];
-            dstTags["packing"] = [ `${config.dstFormat}` ];
-            if ("420P" === config.dstFormat) {
-              dstTags["depth"] = [ "8" ];
-              dstTags["sampling"] = [ "YCbCr-4:2:0" ];
+            dstTags['width'] = [ `${config.dstWidth}` ];
+            dstTags['height'] = [ `${config.dstHeight}` ];
+            dstTags['packing'] = [ `${config.dstFormat}` ];
+            if ('420P' === config.dstFormat) {
+              dstTags['depth'] = [ '8' ];
+              dstTags['sampling'] = [ 'YCbCr-4:2:0' ];
             }
             else {
-              dstTags["depth"] = [ "10" ];
-              dstTags["sampling"] = [ "YCbCr-4:2:2" ];
+              dstTags['depth'] = [ '10' ];
+              dstTags['sampling'] = [ 'YCbCr-4:2:2' ];
             }
 
-            scaleTags = {};
+            var scaleTags = {};
             scaleTags.scale = [ `${config.scaleX}`, `${config.scaleY}`];
             scaleTags.dstOffset = [ 0, 0 ];
 
             var formattedDstTags = JSON.stringify(dstTags, null, 2);
             RED.comms.publish('debug', {
-              format: "Converter output flow tags:",
+              format: 'Converter output flow tags:',
               msg: formattedDstTags
             }, true);
 
@@ -114,7 +113,7 @@ module.exports = function (RED) {
               ledger.formats.video, dstTags, source.id, null);
 
             nodeAPI.putResource(source).catch(err => {
-              push(`Unable to register source: ${err}`)
+              push(`Unable to register source: ${err}`);
             });
             nodeAPI.putResource(dstFlow).then(() => {
               dstBufLen = converter.setInfo(this.srcFlow.tags, dstTags, scaleTags);
@@ -134,5 +133,5 @@ module.exports = function (RED) {
     this.on('close', this.close);
   }
   util.inherits(Converter, redioactive.Valve);
-  RED.nodes.registerType("converter", Converter);
-}
+  RED.nodes.registerType('converter', Converter);
+};

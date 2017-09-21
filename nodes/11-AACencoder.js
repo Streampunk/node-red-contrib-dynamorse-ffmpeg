@@ -25,7 +25,6 @@ module.exports = function (RED) {
     this.srcFlow = null;
     var dstFlow = null;
     var dstBufLen = 0;
-    var numChannels = 2;
 
     if (!this.context().global.get('updated'))
       return this.log('Waiting for global context updated.');
@@ -37,7 +36,6 @@ module.exports = function (RED) {
       console.log('AAC Encoder error: ' + err);
     });
 
-    var node = this;
     var nodeAPI = this.context().global.get('nodeAPI');
     var ledger = this.context().global.get('ledger');
     var localName = config.name || `${config.type}-${config.id}`;
@@ -65,13 +63,13 @@ module.exports = function (RED) {
         numSrcPkts++;
 
         var dstBuf = Buffer.alloc(dstBufLen);
-        var numQueued = encoder.encode([packet], dstBuf, (err, result) => {
+        encoder.encode([packet], dstBuf, (err, result) => {
           numDstPkts++;
           if (err) {
             push(err);
           } else if (result) {
             push(null, new Grain(result, x.ptpSync, x.ptpOrigin,
-                                 x.timecode, dstFlow.id, source.id, x.duration));
+              x.timecode, dstFlow.id, source.id, x.duration));
           }
           if (numDstPkts === numSrcPkts)
             next();
@@ -94,27 +92,27 @@ module.exports = function (RED) {
       } else if (Grain.isGrain(x)) {
         if (!this.srcFlow) {
           this.getNMOSFlow(x, (err, f) => {
-            if (err) return push("Failed to resolve NMOS flow.");
+            if (err) return push('Failed to resolve NMOS flow.');
             this.srcFlow = f;
             var srcTags = this.srcFlow.tags;
-            if (srcTags.format[0] === "video") {
-              push("Video grain not supported by AAC encoder!!");
+            if (srcTags.format[0] === 'video') {
+              push('Video grain not supported by AAC encoder!!');
               next();
               return;
             }
 
             var dstTags = JSON.parse(JSON.stringify(this.srcFlow.tags));
             var encodeTags = {};
-            dstTags["encodingName"] = [ "AAC" ];
-            encodeTags["bitrate"] = [ `${config.bitrate}` ];
+            dstTags['encodingName'] = [ 'AAC' ];
+            encodeTags['bitrate'] = [ `${config.bitrate}` ];
             var numChannels = +srcTags.channels[0];
             var bitsPerSample = +srcTags.encodingName[0].substring(1);
             packetNumBytes = 1024 * numChannels * (((bitsPerSample+7) / 8) >>> 0);
 
-            var formattedDstTags = "flow: " + JSON.stringify(dstTags, null, 2) +
-              ", encode settings: " + JSON.stringify(encodeTags, null, 2);
+            var formattedDstTags = 'flow: ' + JSON.stringify(dstTags, null, 2) +
+              ', encode settings: ' + JSON.stringify(encodeTags, null, 2);
             RED.comms.publish('debug', {
-              format: "Encoder output flow tags:",
+              format: 'Encoder output flow tags:',
               msg: formattedDstTags
             }, true);
 
@@ -142,5 +140,5 @@ module.exports = function (RED) {
     this.on('close', this.close);
   }
   util.inherits(AACEncoder, redioactive.Valve);
-  RED.nodes.registerType("AAC encoder", AACEncoder);
-}
+  RED.nodes.registerType('AAC encoder', AACEncoder);
+};

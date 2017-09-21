@@ -36,7 +36,6 @@ module.exports = function (RED) {
       console.log('Encoder error: ' + err);
     });
 
-    var node = this;
     var nodeAPI = this.context().global.get('nodeAPI');
     var ledger = this.context().global.get('ledger');
     var localName = config.name || `${config.type}-${config.id}`;
@@ -50,12 +49,12 @@ module.exports = function (RED) {
 
     function processGrain(x, dstBufLen, push, next) {
       var dstBuf = Buffer.alloc(dstBufLen);
-      var numQueued = encoder.encode(x.buffers, dstBuf, (err, result) => {
+      encoder.encode(x.buffers, dstBuf, (err, result) => {
         if (err) {
           push(err);
         } else if (result) {
           push(null, new Grain(result, x.ptpSync, x.ptpOrigin,
-                               x.timecode, dstFlow.id, source.id, x.duration));
+            x.timecode, dstFlow.id, source.id, x.duration));
         }
         next();
       });
@@ -72,21 +71,21 @@ module.exports = function (RED) {
       } else if (Grain.isGrain(x)) {
         if (!this.srcFlow) {
           this.getNMOSFlow(x, (err, f) => {
-            if (err) return push("Failed to resolve NMOS flow.");
+            if (err) return push('Failed to resolve NMOS flow.');
             this.srcFlow = f;
 
             var dstTags = JSON.parse(JSON.stringify(this.srcFlow.tags));
-            dstTags["packing"] = [ `${config.dstFormat}` ];
-            dstTags["encodingName"] = [ `${config.dstFormat}` ];
-            dstTags["sampling"] = [ "YCbCr-4:2:0" ];
+            dstTags['packing'] = [ `${config.dstFormat}` ];
+            dstTags['encodingName'] = [ `${config.dstFormat}` ];
+            dstTags['sampling'] = [ 'YCbCr-4:2:0' ];
 
             var encodeTags = {};
-            encodeTags["bitrate"] = [ `${config.bitrate}` ];
-            encodeTags["gopFrames"] = [ `${config.gopFrames}` ];
+            encodeTags['bitrate'] = [ `${config.bitrate}` ];
+            encodeTags['gopFrames'] = [ `${config.gopFrames}` ];
 
             var formattedDstTags = JSON.stringify(dstTags, null, 2);
             RED.comms.publish('debug', {
-              format: "Encoder output flow tags:",
+              format: 'Encoder output flow tags:',
               msg: formattedDstTags
             }, true);
 
@@ -114,5 +113,5 @@ module.exports = function (RED) {
     this.on('close', this.close);
   }
   util.inherits(Encoder, redioactive.Valve);
-  RED.nodes.registerType("encoder", Encoder);
-}
+  RED.nodes.registerType('encoder', Encoder);
+};
