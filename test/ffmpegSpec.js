@@ -92,7 +92,7 @@ TestUtil.nodeRedTest('A src->encoder->decoder->spout flow is posted to Node-RED'
   encoderMaxBuffer: 10,
   decoderMaxBuffer: 10,
   spoutTimeout: 0
-}, function getFlow(params) {
+}, (params) => {
   var testFlow = JSON.parse(TestUtil.testNodes.baseTestFlow);
   testFlow.nodes[0] = JSON.parse(TestUtil.testNodes.funnelGrainNode);
   testFlow.nodes[0].id = funnel1NodeId;
@@ -118,7 +118,7 @@ TestUtil.nodeRedTest('A src->encoder->decoder->spout flow is posted to Node-RED'
   testFlow.nodes[3].timeout = params.spoutTimeout;
   testFlow.nodes[3].x = 700.0;
   return testFlow;
-}, function onMsg(t, params, msgObj, onEnd) {
+}, (t, params, msgObj, onEnd) => {
   //t.comment(`Message: ${JSON.stringify(msgObj)}`);
   if (msgObj.hasOwnProperty('receive')) {
     TestUtil.checkGrain(t, msgObj.receive);
@@ -136,7 +136,7 @@ TestUtil.nodeRedTest('A src->packer->spout flow is posted to Node-RED', {
   packerFmt: 'pgroup',
   packerMaxBuffer: 10,
   spoutTimeout: 0
-}, function getFlow(params) {
+}, (params) => {
   var testFlow = JSON.parse(TestUtil.testNodes.baseTestFlow);
   testFlow.nodes[0] = JSON.parse(TestUtil.testNodes.funnelGrainNode);
   testFlow.nodes[0].id = funnel1NodeId;
@@ -155,7 +155,7 @@ TestUtil.nodeRedTest('A src->packer->spout flow is posted to Node-RED', {
   testFlow.nodes[2].timeout = params.spoutTimeout;
   testFlow.nodes[2].x = 500.0;
   return testFlow;
-}, function onMsg(t, params, msgObj, onEnd) {
+}, (t, params, msgObj, onEnd) => {
   //t.comment(`Message: ${JSON.stringify(msgObj)}`);
   if (msgObj.hasOwnProperty('receive')) {
     TestUtil.checkGrain(t, msgObj.receive);
@@ -175,7 +175,7 @@ TestUtil.nodeRedTest('A src->converter->spout flow is posted to Node-RED', {
   converterFmt: 'YUV422P10',
   converterMaxBuffer: 10,
   spoutTimeout: 0
-}, function getFlow(params) {
+}, (params) => {
   var testFlow = JSON.parse(TestUtil.testNodes.baseTestFlow);
   testFlow.nodes[0] = JSON.parse(TestUtil.testNodes.funnelGrainNode);
   testFlow.nodes[0].id = funnel1NodeId;
@@ -198,7 +198,7 @@ TestUtil.nodeRedTest('A src->converter->spout flow is posted to Node-RED', {
   testFlow.nodes[2].timeout = params.spoutTimeout;
   testFlow.nodes[2].x = 500.0;
   return testFlow;
-}, function onMsg(t, params, msgObj, onEnd) {
+}, (t, params, msgObj, onEnd) => {
   //t.comment(`Message: ${JSON.stringify(msgObj)}`);
   if (msgObj.hasOwnProperty('receive')) {
     TestUtil.checkGrain(t, msgObj.receive);
@@ -220,7 +220,7 @@ TestUtil.nodeRedTest('A (src->converter)x4->mutiviewer->spout flow is posted to 
   multiviewerHeight: 720,
   multiviewerFormat: '420P',
   spoutTimeout: 0
-}, function getFlow(params) {
+}, (params) => {
   var i=0;
   var testFlow = JSON.parse(TestUtil.testNodes.baseTestFlow);
   testFlow.nodes[i] = JSON.parse(TestUtil.testNodes.funnelGrainNode);
@@ -314,7 +314,7 @@ TestUtil.nodeRedTest('A (src->converter)x4->mutiviewer->spout flow is posted to 
   testFlow.nodes[i].timeout = params.spoutTimeout;
   testFlow.nodes[i].x = 700.0;
   return testFlow;
-}, function onMsg(t, params, msgObj, onEnd) {
+}, (t, params, msgObj, onEnd) => {
   //t.comment(`Message: ${JSON.stringify(msgObj)}`);
   if (msgObj.hasOwnProperty('receive')) {
     TestUtil.checkGrain(t, msgObj.receive);

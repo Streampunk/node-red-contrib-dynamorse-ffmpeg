@@ -9,10 +9,6 @@ module.exports = {
             "error",
             2
         ],
-        "linebreak-style": [
-            "error",
-            "windows"
-        ],
         "quotes": [
             "error",
             "single"
@@ -22,6 +18,6 @@ module.exports = {
             "always"
         ],
         "no-console": "off",
-        "linebreak-style": "off"
+        "prefer-arrow-callback": "error"
     }
 };

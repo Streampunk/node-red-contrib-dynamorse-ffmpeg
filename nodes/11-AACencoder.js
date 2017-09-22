@@ -86,7 +86,7 @@ module.exports = function (RED) {
         push(err);
         next();
       } else if (redioactive.isEnd(x)) {
-        encoder.quit(function() {
+        encoder.quit(() => {
           push(null, x);
         });
       } else if (Grain.isGrain(x)) {

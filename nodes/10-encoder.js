@@ -29,10 +29,10 @@ module.exports = function (RED) {
     if (!this.context().global.get('updated'))
       return this.log('Waiting for global context updated.');
 
-    var encoder = new codecadon.Encoder(function() {
+    var encoder = new codecadon.Encoder(() => {
       console.log('Encoder exiting');
     });
-    encoder.on('error', function(err) {
+    encoder.on('error', err => {
       console.log('Encoder error: ' + err);
     });
 
