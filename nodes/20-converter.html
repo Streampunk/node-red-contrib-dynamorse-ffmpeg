@@ -28,6 +28,7 @@
         dstWidth: { value : 1280, validate : RED.validators.number() },
         dstHeight: { value : 720, validate : RED.validators.number() },
         dstFormat: { value : "420P" },
+        dstAlpha: { value : false },
         multiviewSetup: { value : "", type : "multiview setup", required : false, }
       },
       inputs:1,
@@ -76,10 +77,12 @@
   </div>
   <div class="form-row">
     <label for="node-input-dstFormat"><i class="fa fa-paw"></i> dest format</label>
-    <select name="node-input-dstFormat" id="node-input-dstFormat">
+    <select name="node-input-dstFormat" id="node-input-dstFormat" style="display: inline-block; width: 150px;">
       <option value="420P" selected>420P</option>
       <option value="YUV422P10">YUV422P10</option>
     </select>
+    <input type="checkbox" id="node-input-dstAlpha" style="display: inline-block; width: auto; margin-left: 10px;">
+    <label for="node-input-dstAlpha" style="width: 100px;"> include alpha</label>
   </div>
   <div class="form-row">
     <label for="node-input-multiviewSetup"><i class="fa fa-paw"></i> multiview setup</label>
@@ -138,7 +141,7 @@
    </tr>
    <tr>
     <td><i class="fa fa-paw"></i> dest format</td>
-    <td>Select the desired packing format of the converter output.</td>
+    <td>Select the desired packing format of the converter output. The checkbox provides the option to include an alpha channel in the output</td>
    </tr>
    <tr>
     <td><i class="fa fa-paw"></i> multiview setup</td>

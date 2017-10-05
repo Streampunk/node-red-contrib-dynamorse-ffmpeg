@@ -98,6 +98,14 @@ module.exports = function (RED) {
               dstTags['depth'] = [ '10' ];
               dstTags['sampling'] = [ 'YCbCr-4:2:2' ];
             }
+            var srcHasAlpha = !(null == this.srcFlow.tags.hasAlpha);
+            if (srcHasAlpha) {
+              if (Array.isArray(this.srcFlow.tags.hasAlpha))
+                srcHasAlpha = ('true' === this.srcFlow.tags.hasAlpha[0]) || ('1' === this.srcFlow.tags.hasAlpha[0]);
+              else
+                srcHasAlpha = this.srcFlow.tags.hasAlpha;
+            }
+            dstTags['hasAlpha'] = [ `${srcHasAlpha && config.dstAlpha}` ];
 
             var scaleTags = {};
             scaleTags.scale = [ `${config.scaleX}`, `${config.scaleY}`];
