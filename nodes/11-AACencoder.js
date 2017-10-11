@@ -13,64 +13,61 @@
   limitations under the License.
 */
 
-var util = require('util');
-var redioactive = require('node-red-contrib-dynamorse-core').Redioactive;
-var Grain = require('node-red-contrib-dynamorse-core').Grain;
-var codecadon = require('codecadon');
+const util = require('util');
+const ValveCommon = require('./valveCommon.js').ValveCommon;
+const codecadon = require('codecadon');
 
 module.exports = function (RED) {
   function AACEncoder (config) {
     RED.nodes.createNode(this, config);
-    redioactive.Valve.call(this, config);
-    this.srcFlow = null;
-    var dstFlow = null;
-    var dstBufLen = 0;
+    ValveCommon.call(this, RED, config);
 
-    if (!this.context().global.get('updated'))
-      return this.log('Waiting for global context updated.');
+    var encoder = new codecadon.Encoder(() => this.log('AAC Encoder exiting'));
+    encoder.on('error', err => this.error('AAC Encoder error: ' + err));
 
-    var encoder = new codecadon.Encoder(() => {
-      console.log('AAC Encoder exiting');
-    });
-    encoder.on('error', err => {
-      console.log('AAC Encoder error: ' + err);
-    });
+    let packetNumBytes = 8192;
+    let lastBuf = Buffer.alloc(0);
 
-    var nodeAPI = this.context().global.get('nodeAPI');
-    var ledger = this.context().global.get('ledger');
-    var localName = config.name || `${config.type}-${config.id}`;
-    var localDescription = config.description || `${config.type}-${config.id}`;
-    var pipelinesID = config.device ?
-      RED.nodes.getNode(config.device).nmos_id :
-      this.context().global.get('pipelinesID');
+    this.findSrcTags = cable => {
+      if (!Array.isArray(cable[0].audio) && cable[0].audio.length < 1) {
+        return Promise.reject('Logical cable does not contain audio');
+      }
+      return cable[0].audio[0].tags;
+    };
 
-    var source = new ledger.Source(null, null, localName, localDescription,
-      ledger.formats.video, null, null, pipelinesID, null);
+    this.makeDstTags = srcTags => {
+      const dstTags = JSON.parse(JSON.stringify(srcTags));
+      dstTags['encodingName'] = [ 'AAC' ];
+      return dstTags;
+    };
 
-    var packetNumBytes = 8192;
-    var lastBuf = Buffer.alloc(0);
+    this.setInfo = (srcTags, dstTags, duration, logLevel) => {
+      const numChannels = +srcTags.channels[0];
+      const bitsPerSample = +srcTags.encodingName[0].substring(1);
+      packetNumBytes = 1024 * numChannels * (((bitsPerSample+7) / 8) >>> 0);
 
-    function processGrain(x, dstBufLen, push, next) {
-      var curStart = 0;
-      var numSrcPkts = 0;
-      var numDstPkts = 0;
+      const encodeTags = {};
+      encodeTags['bitrate'] = [ `${config.bitrate}` ];
+
+      return encoder.setInfo(srcTags, dstTags, duration, encodeTags, logLevel);
+    };
+
+    this.processGrain = (x, dstBufLen, next, cb) => {
+      let curStart = 0;
+      let numSrcPkts = 0;
+      let numDstPkts = 0;
 
       while (curStart + packetNumBytes - lastBuf.length < x.buffers[0].length) {
-        var packet = Buffer.concat([lastBuf, x.buffers[0].slice(curStart, curStart + packetNumBytes - lastBuf.length)], packetNumBytes);
+        const packet = Buffer.concat([lastBuf, x.buffers[0].slice(curStart, curStart + packetNumBytes - lastBuf.length)], packetNumBytes);
         curStart += packetNumBytes - lastBuf.length;
         if (lastBuf.length)
           lastBuf = Buffer.alloc(0);
         numSrcPkts++;
 
-        var dstBuf = Buffer.alloc(dstBufLen);
+        const dstBuf = Buffer.alloc(dstBufLen);
         encoder.encode([packet], dstBuf, (err, result) => {
           numDstPkts++;
-          if (err) {
-            push(err);
-          } else if (result) {
-            push(null, new Grain(result, x.ptpSync, x.ptpOrigin,
-              x.timecode, dstFlow.id, source.id, x.duration));
-          }
+          cb(err, result);
           if (numDstPkts === numSrcPkts)
             next();
         });
@@ -79,66 +76,16 @@ module.exports = function (RED) {
         lastBuf.length + x.buffers[0].length - curStart);
       if (!numSrcPkts) // this grain didn't fill the encode packet
         next();
-    }
+    };
 
-    this.consume((err, x, push, next) => {
-      if (err) {
-        push(err);
-        next();
-      } else if (redioactive.isEnd(x)) {
-        encoder.quit(() => {
-          push(null, x);
-        });
-      } else if (Grain.isGrain(x)) {
-        if (!this.srcFlow) {
-          this.getNMOSFlow(x, (err, f) => {
-            if (err) return push('Failed to resolve NMOS flow.');
-            this.srcFlow = f;
-            var srcTags = this.srcFlow.tags;
-            if (srcTags.format[0] === 'video') {
-              push('Video grain not supported by AAC encoder!!');
-              next();
-              return;
-            }
+    this.quit = cb => {
+      encoder.quit(() => cb());
+    };
 
-            var dstTags = JSON.parse(JSON.stringify(this.srcFlow.tags));
-            var encodeTags = {};
-            dstTags['encodingName'] = [ 'AAC' ];
-            encodeTags['bitrate'] = [ `${config.bitrate}` ];
-            var numChannels = +srcTags.channels[0];
-            var bitsPerSample = +srcTags.encodingName[0].substring(1);
-            packetNumBytes = 1024 * numChannels * (((bitsPerSample+7) / 8) >>> 0);
-
-            var formattedDstTags = 'flow: ' + JSON.stringify(dstTags, null, 2) +
-              ', encode settings: ' + JSON.stringify(encodeTags, null, 2);
-            RED.comms.publish('debug', {
-              format: 'Encoder output flow tags:',
-              msg: formattedDstTags
-            }, true);
-
-            dstFlow = new ledger.Flow(null, null, localName, localDescription,
-              ledger.formats.audio, dstTags, source.id, null);
-
-            nodeAPI.putResource(source).catch(err => {
-              push(`Unable to register source: ${err}`);
-            });
-            nodeAPI.putResource(dstFlow).then(() => {
-              dstBufLen = encoder.setInfo(this.srcFlow.tags, dstTags, x.duration, encodeTags);
-              processGrain(x, dstBufLen, push, next);
-            }, err => {
-              push(`Unable to register flow: ${err}`);
-            });
-          });
-        } else {
-          processGrain(x, dstBufLen, push, next);
-        }
-      } else {
-        push(null, x);
-        next();
-      }
-    });
-    this.on('close', this.close);
+    this.closeValve = done => {
+      this.close(done);
+    };
   }
-  util.inherits(AACEncoder, redioactive.Valve);
+  util.inherits(AACEncoder, ValveCommon);
   RED.nodes.registerType('AAC encoder', AACEncoder);
 };

@@ -13,30 +13,19 @@
   limitations under the License.
 */
 
-var uuid = require('uuid');
-var util = require('util');
-var redioactive = require('node-red-contrib-dynamorse-core').Redioactive;
-var Grain = require('node-red-contrib-dynamorse-core').Grain;
-var codecadon = require('codecadon');
+const uuid = require('uuid');
+const util = require('util');
+const redioactive = require('node-red-contrib-dynamorse-core').Redioactive;
+const Grain = require('node-red-contrib-dynamorse-core').Grain;
+const codecadon = require('codecadon');
 
 function Queue() {
   this.stack = [];
-  this.entry = function(i) {
-    // flip so that the stack appears to be a fifo not a lifo!!
-    return this.stack[this.length() - i - 1];
-  };
-  this.front = function() {
-    return this.entry(0);
-  };
-  this.dequeue = function() {
-    return this.stack.pop();
-  };
-  this.enqueue = function(item) {
-    this.stack.unshift(item);
-  };
-  this.length = function() {
-    return this.stack.length;
-  };
+  this.entry = i => this.stack[this.length() - i - 1]; // flip so that the stack appears to be a fifo not a lifo!!
+  this.front = () => this.entry(0);
+  this.dequeue = () => this.stack.pop();
+  this.enqueue = item => this.stack.unshift(item);
+  this.length = () => this.stack.length;
 }
 
 function srcSlot(grain, slotNum) {
@@ -49,7 +38,7 @@ function dstTile(dstBufBytes, numSlots) {
   this.numEmptySlots = numSlots;
 }
 
-dstTile.prototype.setSlotDone = function() {
+dstTile.prototype.setSlotDone = function() { 
   if (this.numEmptySlots > 0)
     --this.numEmptySlots;
 };
@@ -69,23 +58,23 @@ function multiviewSlots(numSlots, maxQueue, dstBufBytes) {
 
   this.dstTiles = new Queue();
   this.slotQueue = [];
-  for (var i=0; i<this.numSlots; ++i)
+  for (let i=0; i<this.numSlots; ++i)
     this.slotQueue[i] = new Queue();
 }
 
 multiviewSlots.prototype.addDstTile = function(preWipe) {
-  var newDstTile = new dstTile(this.dstBufBytes, this.numSlots);
+  const newDstTile = new dstTile(this.dstBufBytes, this.numSlots);
   preWipe(newDstTile.dstBuf); // wipe is queued but will be completed before any other operation
   this.dstTiles.enqueue(newDstTile);
   return newDstTile;
 };
 
 multiviewSlots.prototype.addSrcSlot = function(x, slotNum, preWipe) {
-  var curQueue = this.slotQueue[slotNum];
-  var curSrcSlot = new srcSlot(x, slotNum);
-
-  var curDstTile = null;
-  var curIndex = curQueue.length();
+  const curQueue = this.slotQueue[slotNum];
+  const curSrcSlot = new srcSlot(x, slotNum);
+  
+  let curDstTile = null;
+  const curIndex = curQueue.length();
   if (this.dstTiles.length() === curIndex)
     curDstTile = this.addDstTile(preWipe);
   else
@@ -96,15 +85,15 @@ multiviewSlots.prototype.addSrcSlot = function(x, slotNum, preWipe) {
     return;
   }
   curQueue.enqueue(curSrcSlot);
-
+  
   return curDstTile;
 };
 
 multiviewSlots.prototype.setSlotDone = function(dstTile) {
   dstTile.setSlotDone();
 
-  var doneDstTile = null;
-  var frontDstTile = this.dstTiles.front();
+  let doneDstTile = null;
+  const frontDstTile = this.dstTiles.front();
   if (frontDstTile) {
     if ((this.dstTiles.length() > this.maxQueue) && !frontDstTile.isDone()) {
       console.log('Forcing flush of partially complete multiviewer tile');
@@ -113,7 +102,7 @@ multiviewSlots.prototype.setSlotDone = function(dstTile) {
 
     if (frontDstTile.isDone()) {
       doneDstTile = this.dstTiles.dequeue();
-      for (var i=0; i<this.numSlots; ++i) {
+      for (let i=0; i<this.numSlots; ++i) {
         this.slotQueue[i].dequeue();
       }
     }
@@ -127,84 +116,69 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, config);
     redioactive.Valve.call(this, config);
 
-    this.srcFlows = [];
-    this.dstOrgs = [];
+    const logLevel = ['fatal', 'error', 'warn', 'info', 'debug', 'trace'].indexOf(RED.settings.logging.console.level);
+    const maxQueue = 2;
+    let srcCable = null;
+    let srcTags = null;
+    let flowID = null;
+    let sourceID = null;
+    let multiview = null;
+    let dstOrgs = [];
+    let dstBufLen = 0;
+    let numEnds = 0;
 
-    var dstFlow = null;
-    var dstBufLen = 0;
-    var nextSrcFlow = 0;
-    var maxQueue = 2;
-    var numEnds = 0;
-
-    this.multiviewSetup = RED.nodes.getNode(config.multiviewSetup);
-    if (!this.multiviewSetup)
+    const multiviewSetup = RED.nodes.getNode(config.multiviewSetup);
+    if (!multiviewSetup)
       return node.log('Multiviewer setup config not found!!');
 
-    var numTiles = +this.multiviewSetup.tiles;
-    var numHTiles = numTiles / 2;
-    var numVTiles = numHTiles;
-    this.multiviewSetup.tileWidth = +config.dstWidth / numHTiles;
-    this.multiviewSetup.tileHeight = +config.dstHeight / numVTiles;
-    this.multiviewSetup.tileFormat = config.dstFormat;
+    const numTiles = +multiviewSetup.tiles;
+    const numHTiles = numTiles / 2;
+    const numVTiles = numHTiles;
+    multiviewSetup.tileWidth = +config.dstWidth / numHTiles;
+    multiviewSetup.tileHeight = +config.dstHeight / numVTiles;
+    multiviewSetup.tileFormat = config.dstFormat;
 
-    var i=0;
-    for (var v=0; v<numVTiles; ++v)
-      for (var h=0; h<numHTiles; ++h)
-        this.dstOrgs[i++] = [(+config.dstWidth * h) / numHTiles, (+config.dstHeight * v) / numVTiles];
+    let i=0;
+    for (let v=0; v<numVTiles; ++v)
+      for (let h=0; h<numHTiles; ++h)
+        dstOrgs[i++] = [(+config.dstWidth * h) / numHTiles, (+config.dstHeight * v) / numVTiles];
 
-    if (!this.context().global.get('updated'))
-      return this.log('Waiting for global context updated.');
+    const stamper = new codecadon.Stamper(() => this.log('stamper exiting'));
+    stamper.on('error', err => this.error('Stamper error: ' + err));
 
-    var stamper = new codecadon.Stamper(() => {
-      console.log('Stamper exiting');
-    });
-    stamper.on('error', err => {
-      console.log('Stamper error: ' + err);
-    });
-
-    var node = this;
-    var nodeAPI = this.context().global.get('nodeAPI');
-    var ledger = this.context().global.get('ledger');
-    var localName = config.name || `${config.type}-${config.id}`;
-    var localDescription = config.description || `${config.type}-${config.id}`;
-    var pipelinesID = config.device ?
-      RED.nodes.getNode(config.device).nmos_id :
-      this.context().global.get('pipelinesID');
-
-    var source = new ledger.Source(null, null, localName, localDescription,
-      ledger.formats.video, null, null, pipelinesID, null);
+    const node = this;
 
     function checkSrcFlowIds(flowId) {
-      for (var i=0; i<numTiles; ++i) {
-        if (node.srcFlows[i] && (flowId === node.srcFlows[i].id))
+      for (let i=0; i<srcCable.length; ++i) {
+        if (flowId === srcCable[i].video[0].flowID) 
           return i;
       }
     }
 
     function preWipe(dstBuf) {
-      var paramTags = {
+      const paramTags = {
         wipeRect:[0, 0, +config.dstWidth, +config.dstHeight],
         wipeCol:[0.0, 0.0, 0.0]
       };
       stamper.wipe(dstBuf, paramTags, (err) => {
         if (err)
-          console.log(err);
+          node.error(err);
       });
     }
 
     function processGrain(x, slotNum, push, next) {
-      var dstTile = node.mv.addSrcSlot(x, slotNum, preWipe);
+      const dstTile = multiview.addSrcSlot.call(multiview, x, slotNum, preWipe);
       if (!dstTile) { next(); return; }
 
-      var paramTags = { dstOrg:node.dstOrgs[slotNum] };
+      const paramTags = { dstOrg:dstOrgs[slotNum] };
       stamper.copy(x.buffers, dstTile.dstBuf, paramTags, (err) => {
         if (err) {
           push(err);
         } else {
-          var doneDstTile = node.mv.setSlotDone(dstTile);
+          const doneDstTile = multiview.setSlotDone(dstTile);
           if (doneDstTile) {
             push(null, new Grain(doneDstTile.dstBuf, x.ptpSync, x.ptpOrigin,
-              x.timecode, dstFlow.id, source.id, x.duration));
+              x.timecode, flowID, sourceID, x.duration));
           }
         }
         next();
@@ -216,61 +190,56 @@ module.exports = function (RED) {
         push(err);
         next();
       } else if (redioactive.isEnd(x)) {
-        if (node.srcFlows.length === ++numEnds) {
+        if (srcCable.length === ++numEnds) {
           stamper.quit(() => {
             push(null, x);
           });
         }
       } else if (Grain.isGrain(x)) {
-        var grainFlowId = uuid.unparse(x.flow_id);
-        var slotNum = checkSrcFlowIds(grainFlowId);
-        if (undefined === slotNum) {
-          this.getNMOSFlow(x, (err, f) => {
-            if (err) return push('Failed to resolve NMOS flow.');
-            slotNum = nextSrcFlow++;
-            var firstGrain = this.srcFlows.length === 0;
-            this.srcFlows[slotNum] = f;
-
-            if (firstGrain) {
-              var dstTags = JSON.parse(JSON.stringify(f.tags));
-              dstTags['width'] = [ `${config.dstWidth}` ];
-              dstTags['height'] = [ `${config.dstHeight}` ];
-              dstTags['packing'] = [ `${config.dstFormat}` ];
-              if ('420P' === config.dstFormat) {
-                dstTags['depth'] = [ '8' ];
-                dstTags['sampling'] = [ 'YCbCr-4:2:0' ];
-              }
-              else {
-                dstTags['depth'] = [ '10' ];
-                dstTags['sampling'] = [ 'YCbCr-4:2:2' ];
-              }
-              dstBufLen = stamper.setInfo(f.tags, dstTags);
-              node.mv = new multiviewSlots(numTiles, maxQueue, dstBufLen);
-
-              var formattedDstTags = JSON.stringify(dstTags, null, 2);
-              RED.comms.publish('debug', {
-                format: 'Multiviewer output flow tags:',
-                msg: formattedDstTags
-              }, true);
-
-              dstFlow = new ledger.Flow(null, null, localName, localDescription,
-                ledger.formats.video, dstTags, source.id, null);
-
-              nodeAPI.putResource(source).catch(err => {
-                push(`Unable to register source: ${err}`);
-              });
-              nodeAPI.putResource(dstFlow).then(() => {
-                processGrain(x, slotNum, push, next);
-              }, err => {
-                push(`Unable to register flow: ${err}`);
-              });
-            } else {
-              processGrain(x, slotNum, push, next);
+        const nextJob = (srcTags) ?
+          Promise.resolve(x) :
+          this.findCable(x).then(cable => {
+            srcCable = cable;
+            if (!Array.isArray(cable[0].video) && cable[0].video.length < 1) {
+              return Promise.reject('Logical cable does not contain video');
             }
+            srcTags = cable[0].video[0].tags;
+
+            const dstTags = JSON.parse(JSON.stringify(srcTags));
+            dstTags['width'] = [ `${config.dstWidth}` ];
+            dstTags['height'] = [ `${config.dstHeight}` ];
+            dstTags['packing'] = [ `${config.dstFormat}` ];
+            if ('420P' === config.dstFormat) {
+              dstTags['depth'] = [ '8' ];
+              dstTags['sampling'] = [ 'YCbCr-4:2:0' ];
+            }
+            else {
+              dstTags['depth'] = [ '10' ];
+              dstTags['sampling'] = [ 'YCbCr-4:2:2' ];
+            }
+
+            const formattedDstTags = JSON.stringify(dstTags, null, 2);
+            RED.comms.publish('debug', {
+              format: 'Multiviewer output flow tags:',
+              msg: formattedDstTags
+            }, true);
+
+            this.makeCable({ video : [{ tags : dstTags }], backPressure : 'video[0]' });
+            flowID = this.flowID();
+            sourceID = this.sourceID();
+              
+            dstBufLen = stamper.setInfo(srcTags, dstTags, logLevel);
+            multiview = new multiviewSlots(numTiles, maxQueue, dstBufLen);
           });
-        } else {
+
+        nextJob.then(() => {
+          const grainFlowId = uuid.unparse(x.flow_id);
+          const slotNum = checkSrcFlowIds(grainFlowId);
           processGrain(x, slotNum, push, next);
-        }
+        }).catch(err => {
+          push(err);
+          next();
+        });
       } else {
         push(null, x);
         next();

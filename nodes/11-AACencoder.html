@@ -22,9 +22,8 @@
         name: { value : ""},
         maxBuffer : { value : 10, validate : RED.validators.number() },
         description : { value : "" },
-        device : { value : "", type : "device", required : true },
         dstFormat: { value : "AAC" },
-        bitrate : { value : 128000, validate : RED.validators.number() },
+        bitrate : { value : 128000, validate : RED.validators.number() }
       },
       inputs:1,
       outputs:1,
@@ -44,10 +43,6 @@
   <div class="form-row">
     <label for="node-input-description"><i class="fa fa-info-circle"></i> description</label>
     <input type="text" id="node-input-description" placeholder="source and flow description">
-  </div>
-  <div class="form-row">
-    <label for="node-input-device"><i class="fa fa-tablet"></i> device</label>
-    <input type="text" id="node-input-device">
   </div>
   <div class="form-row">
     <label for="node-input-maxBuffer"><i class="fa fa-suitcase"></i> max buffer</label>
@@ -74,7 +69,7 @@
 </style>
 
 <script type="text/x-red" data-help-name="AAC encoder">
-  <h1>Video encoder</h1>
+  <h1>AAC encoder</h1>
   <p>Encodes uncompressed audio grains to the specified format, creating a new NMOS flow
   with the correct attributes.</p>
 
@@ -91,10 +86,6 @@
    <tr>
     <td><i class="fa fa-info-circle"></i> description</td>
     <td>Optional description of this NMOS output source and output flow.</td>
-   </tr>
-   <tr>
-    <td><i class="fa fa-tablet"></i> device</td>
-    <td>Select or create an NMOS device for this source and flow.</td>
    </tr>
    <tr>
     <td><i class="fa fa-suitcase"></i> max buffer</td>
