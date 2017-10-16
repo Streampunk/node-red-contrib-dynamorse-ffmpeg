@@ -34,16 +34,16 @@ module.exports = function (RED) {
 
     this.makeDstTags = srcTags => {
       const dstTags = JSON.parse(JSON.stringify(srcTags));
-      dstTags['packing'] = [ `${config.dstFormat}` ];
-      dstTags['encodingName'] = [ `${config.dstFormat}` ];
-      dstTags['sampling'] = [ 'YCbCr-4:2:0' ];
+      dstTags.packing = config.dstFormat;
+      dstTags.encodingName = config.dstFormat;
+      dstTags.sampling = 'YCbCr-4:2:0';
       return dstTags;
     };
 
     this.setInfo = (srcTags, dstTags, duration, logLevel) => {
       const encodeTags = {};
-      encodeTags['bitrate'] = [ `${config.bitrate}` ];
-      encodeTags['gopFrames'] = [ `${config.gopFrames}` ];
+      encodeTags.bitrate = config.bitrate;
+      encodeTags.gopFrames = config.gopFrames;
 
       return encoder.setInfo(srcTags, dstTags, duration, encodeTags, logLevel);
     };

@@ -206,16 +206,16 @@ module.exports = function (RED) {
             srcTags = cable[0].video[0].tags;
 
             const dstTags = JSON.parse(JSON.stringify(srcTags));
-            dstTags['width'] = [ `${config.dstWidth}` ];
-            dstTags['height'] = [ `${config.dstHeight}` ];
-            dstTags['packing'] = [ `${config.dstFormat}` ];
+            dstTags.width = config.dstWidth;
+            dstTags.height = config.dstHeight;
+            dstTags.packing = config.dstFormat;
             if ('420P' === config.dstFormat) {
-              dstTags['depth'] = [ '8' ];
-              dstTags['sampling'] = [ 'YCbCr-4:2:0' ];
+              dstTags.depth = 8;
+              dstTags.sampling = 'YCbCr-4:2:0';
             }
             else {
-              dstTags['depth'] = [ '10' ];
-              dstTags['sampling'] = [ 'YCbCr-4:2:2' ];
+              dstTags.depth = 10;
+              dstTags.sampling = 'YCbCr-4:2:2';
             }
 
             const formattedDstTags = JSON.stringify(dstTags, null, 2);

@@ -45,16 +45,16 @@ module.exports = function (RED) {
 
     this.makeDstTags = srcTags => {
       const dstTags = JSON.parse(JSON.stringify(srcTags));
-      dstTags['width'] = [ `${config.dstWidth}` ];
-      dstTags['height'] = [ `${config.dstHeight}` ];
-      dstTags['packing'] = [ `${config.dstFormat}` ];
+      dstTags.width = config.dstWidth;
+      dstTags.height = config.dstHeight;
+      dstTags.packing = config.dstFormat;
       if ('420P' === config.dstFormat) {
-        dstTags['depth'] = [ '8' ];
-        dstTags['sampling'] = [ 'YCbCr-4:2:0' ];
+        dstTags.depth = 8;
+        dstTags.sampling = 'YCbCr-4:2:0';
       }
       else {
-        dstTags['depth'] = [ '10' ];
-        dstTags['sampling'] = [ 'YCbCr-4:2:2' ];
+        dstTags.depth = 10;
+        dstTags.sampling = 'YCbCr-4:2:2';
       }
 
       let srcHasAlpha = !(null == srcTags.hasAlpha);
@@ -64,13 +64,13 @@ module.exports = function (RED) {
         else
           srcHasAlpha = srcTags.hasAlpha;
       }
-      dstTags['hasAlpha'] = [ `${srcHasAlpha && config.dstAlpha}` ];
+      dstTags.hasAlpha = srcHasAlpha && config.dstAlpha;
       return dstTags;
     };
 
     this.setInfo = (srcTags, dstTags, duration, logLevel) => {
       const scaleTags = {};
-      scaleTags.scale = [ `${config.scaleX}`, `${config.scaleY}`];
+      scaleTags.scale = [ config.scaleX, config.scaleY ];
       scaleTags.dstOffset = [ 0, 0 ];
 
       return converter.setInfo(srcTags, dstTags, scaleTags, logLevel);

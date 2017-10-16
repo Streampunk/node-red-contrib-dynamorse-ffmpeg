@@ -34,9 +34,9 @@ module.exports = function (RED) {
 
     this.makeDstTags = srcTags => {
       const dstTags = JSON.parse(JSON.stringify(srcTags));
-      dstTags['packing'] = [ '420P' ];
-      dstTags['encodingName'] = [ 'raw' ];
-      dstTags['sampling'] = [ 'YCbCr-4:2:0' ];
+      dstTags.packing = '420P';
+      dstTags.encodingName = 'raw';
+      dstTags.sampling = 'YCbCr-4:2:0';
       return dstTags;
     };
 

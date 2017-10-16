@@ -34,14 +34,14 @@ module.exports = function (RED) {
 
     this.makeDstTags = srcTags => {
       const dstTags = JSON.parse(JSON.stringify(srcTags));
-      dstTags['packing'] = [ `${config.dstFormat}` ];
+      dstTags.packing = [ `${config.dstFormat}` ];
       if ('420P' === config.dstFormat) {
-        dstTags['depth'] = [ '8' ];
-        dstTags['sampling'] = [ 'YCbCr-4:2:0' ];
+        dstTags.depth = 8;
+        dstTags.sampling = 'YCbCr-4:2:0';
       }
       else {
-        dstTags['depth'] = [ '10' ];
-        dstTags['sampling'] = [ 'YCbCr-4:2:2' ];
+        dstTags.depth = 10;
+        dstTags.sampling = 'YCbCr-4:2:2';
       }
       return dstTags;
     };

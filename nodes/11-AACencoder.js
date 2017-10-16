@@ -37,7 +37,7 @@ module.exports = function (RED) {
 
     this.makeDstTags = srcTags => {
       const dstTags = JSON.parse(JSON.stringify(srcTags));
-      dstTags['encodingName'] = [ 'AAC' ];
+      dstTags.encodingName = 'AAC';
       return dstTags;
     };
 
@@ -47,7 +47,7 @@ module.exports = function (RED) {
       packetNumBytes = 1024 * numChannels * (((bitsPerSample+7) / 8) >>> 0);
 
       const encodeTags = {};
-      encodeTags['bitrate'] = [ `${config.bitrate}` ];
+      encodeTags.bitrate = config.bitrate;
 
       return encoder.setInfo(srcTags, dstTags, duration, encodeTags, logLevel);
     };
