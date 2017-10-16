@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-dynamorse-ffmpeg",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Dynamorse processing nodes using FFmpeg for Node-RED",
   "author": "Streampunk Media Ltd",
   "license": "Apache-2.0",
@@ -13,7 +13,7 @@
   },
   "devDependencies": {
     "dynamorse-test": "^0.1.1",
-    "eslint": "^4.7.1",
+    "eslint": "^4.9.0",
     "tape": "^4.8.0"
   },
   "scripts": {
