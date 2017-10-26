@@ -25,16 +25,17 @@ module.exports = function (RED) {
     const packer = new codecadon.Packer(() => this.log('packer exiting'));
     packer.on('error', err => this.error('packer error: ' + err));
 
-    this.findSrcTags = cable => {
-      if (!Array.isArray(cable[0].video) && cable[0].video.length < 1) {
-        return Promise.reject('Logical cable does not contain video');
+    this.getProcessSources = cable => {
+      const sel = [{ type: 'video', index: 0 }];
+      if (!(Array.isArray(cable[0][sel[0].type]) && cable[0][sel[0].type].length > 0)) {
+        throw new Error(`Logical cable does not contain flow ${sel[0].type}[${sel[0].index}]`);
       }
-      return cable[0].video[0].tags;
+      return sel;
     };
 
     this.makeDstTags = srcTags => {
       const dstTags = JSON.parse(JSON.stringify(srcTags));
-      dstTags.packing = [ `${config.dstFormat}` ];
+      dstTags.packing = config.dstFormat;
       if ('420P' === config.dstFormat) {
         dstTags.depth = 8;
         dstTags.sampling = 'YCbCr-4:2:0';

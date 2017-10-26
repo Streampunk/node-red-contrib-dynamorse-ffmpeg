@@ -16,14 +16,18 @@
 const util = require('util');
 const redioactive = require('node-red-contrib-dynamorse-core').Redioactive;
 const Grain = require('node-red-contrib-dynamorse-core').Grain;
+var uuid = require('uuid');
 
 function ValveCommon (RED, config) {
   redioactive.Valve.call(this, config);
 
   const logLevel = ['fatal', 'error', 'warn', 'info', 'debug', 'trace'].indexOf(RED.settings.logging.console.level);
-  let srcTags = null;
+  let cableChecked = false;
+  let setupError = null;
+  let srcIDs = [];
   let flowID = null;
   let sourceID = null;
+  let passthruFlowIDs = [];
   let dstBufLen = 0;
   
   this.doProcess = (x, dstBufLen, push, next) => {
@@ -46,27 +50,65 @@ function ValveCommon (RED, config) {
         push(null, x);
       });
     } else if (Grain.isGrain(x)) {
-      const nextJob = (srcTags) ?
+      const nextJob = (cableChecked) ?
         Promise.resolve(x) :
-        this.findCable(x).then(cable => {
-          srcTags = this.findSrcTags(cable);
-          const dstTags = this.makeDstTags(srcTags);
-          const formattedDstTags = JSON.stringify(dstTags, null, 2);
-          RED.comms.publish('debug', {
-            format: `${config.type} output flow tags:`,
-            msg: formattedDstTags
-          }, true);
+        this.findCable(x)
+          .then(cable => {
+            cableChecked = true;
+            const processSel = this.getProcessSources(cable);
+            const processType = processSel[0].type;
+            const srcTags = cable[0][processType][processSel[0].index].tags;
+            processSel.forEach(s =>
+              srcIDs.push({ flowID: cable[0][s.type][s.index].flowID, sourceID:cable[0][s.type][s.index].sourceID }));
 
-          this.makeCable({ video : [{ tags : dstTags }], backPressure : 'video[0]' });
-          flowID = this.flowID();
-          sourceID = this.sourceID();
+            const dstTags = this.makeDstTags(srcTags);
+            dstBufLen = this.setInfo(srcTags, dstTags, x.duration, logLevel);
 
-          dstBufLen = this.setInfo(srcTags, dstTags, x.duration, logLevel);
-        });
+            let outCableSpec = {};
+            const cableTypes = Object.keys(cable[0]);
+            cableTypes.forEach(t => {
+              if (processType === t)
+                outCableSpec[t] = [{ tags: dstTags }];
+              else if (cable[0][t] && Array.isArray(cable[0][t])) {
+                outCableSpec[t] = cable[0][t];
+                cable[0][t].forEach(f => passthruFlowIDs.push({ flowID: f.flowID, sourceID: f.sourceID }));
+              }
+            });          
 
-      nextJob.then(() => {
-        this.doProcess (x, dstBufLen, push, next);
+            outCableSpec.backPressure = cable[0].backPressure;
+            const outCable = this.makeCable(outCableSpec);
+            flowID = outCable[processType][0].flowID;
+            sourceID = outCable[processType][0].sourceID;
+
+            const formattedCable = JSON.stringify(outCable, null, 2);
+            RED.comms.publish('debug', {
+              format: `${config.type} output cable:`,
+              msg: formattedCable
+            }, true);
+            return x;
+          });
+
+      nextJob.then(x => {
+        if (setupError) {
+          push(setupError);
+          return next();
+        }
+        else {
+          const grainFlowID = uuid.unparse(x.flow_id);
+          const grainSourceID = uuid.unparse(x.source_id);
+          if (srcIDs.find(id => (grainFlowID === id.flowID) && (grainSourceID === id.sourceID)))
+            return this.doProcess (x, dstBufLen, push, next);
+          else if (passthruFlowIDs.find(id => (grainFlowID === id.flowID) && (grainSourceID === id.sourceID))) {
+            push(null, x);
+            return next();
+          } 
+          else {
+            console.log(`Dropping grain with flowID ${grainFlowID}`);
+            return next();
+          }
+        }
       }).catch(err => {
+        setupError = err;
         push(err);
         next();
       });

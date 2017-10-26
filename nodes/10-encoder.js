@@ -25,11 +25,12 @@ module.exports = function (RED) {
     const encoder = new codecadon.Encoder(() => this.log('encoder exiting'));
     encoder.on('error', err => this.error('encoder error: ' + err));
 
-    this.findSrcTags = cable => {
-      if (!Array.isArray(cable[0].video) && cable[0].video.length < 1) {
-        return Promise.reject('Logical cable does not contain video');
+    this.getProcessSources = cable => {
+      const sel = [{ type: 'video', index: 0 }];
+      if (!(Array.isArray(cable[0][sel[0].type]) && cable[0][sel[0].type].length > 0)) {
+        throw new Error(`Logical cable does not contain flow ${sel[0].type}[${sel[0].index}]`);
       }
-      return cable[0].video[0].tags;
+      return sel;
     };
 
     this.makeDstTags = srcTags => {

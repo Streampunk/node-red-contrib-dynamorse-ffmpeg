@@ -28,11 +28,12 @@ module.exports = function (RED) {
     let packetNumBytes = 8192;
     let lastBuf = Buffer.alloc(0);
 
-    this.findSrcTags = cable => {
-      if (!Array.isArray(cable[0].audio) && cable[0].audio.length < 1) {
-        return Promise.reject('Logical cable does not contain audio');
+    this.getProcessSources = cable => {
+      const sel = [{ type: 'audio', index: 0 }];
+      if (!(Array.isArray(cable[0][sel[0].type]) && cable[0][sel[0].type].length > 0)) {
+        throw new Error(`Logical cable does not contain flow ${sel[0].type}[${sel[0].index}]`);
       }
-      return cable[0].audio[0].tags;
+      return sel;
     };
 
     this.makeDstTags = srcTags => {
