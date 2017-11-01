@@ -43,8 +43,8 @@ module.exports = function (RED) {
     };
 
     this.setInfo = (srcTags, dstTags, duration, logLevel) => {
-      const numChannels = +srcTags.channels[0];
-      const bitsPerSample = +srcTags.encodingName[0].substring(1);
+      const numChannels = srcTags.channels;
+      const bitsPerSample = +srcTags.encodingName.substring(1);
       packetNumBytes = 1024 * numChannels * (((bitsPerSample+7) / 8) >>> 0);
 
       const encodeTags = {};
