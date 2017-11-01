@@ -118,8 +118,10 @@ module.exports = function (RED) {
 
     const logLevel = ['fatal', 'error', 'warn', 'info', 'debug', 'trace'].indexOf(RED.settings.logging.console.level);
     const maxQueue = 2;
+    let cableChecked = false;
+    let setupError = null;
     let srcCable = null;
-    let srcTags = null;
+    let srcIDs = [];
     let flowID = null;
     let sourceID = null;
     let multiview = null;
@@ -190,21 +192,28 @@ module.exports = function (RED) {
         push(err);
         next();
       } else if (redioactive.isEnd(x)) {
-        if (srcCable.length === ++numEnds) {
+        if (srcCable && (srcCable.length === ++numEnds)) {
           stamper.quit(() => {
             push(null, x);
           });
         }
       } else if (Grain.isGrain(x)) {
-        const nextJob = (srcTags) ?
+        const nextJob = (cableChecked) ?
           Promise.resolve(x) :
           this.findCable(x).then(cable => {
-            srcCable = cable;
-            if (!Array.isArray(cable[0].video) && cable[0].video.length < 1) {
-              return Promise.reject('Logical cable does not contain video');
-            }
-            srcTags = cable[0].video[0].tags;
+            cableChecked = true;
+            srcCable = cable.filter((c, i) => i < numTiles);
+            if (srcCable.length < numTiles)
+              return Promise.reject(`Multiviewer configured for ${numTiles} input wires, only ${srcCable.length} found`);
 
+            for (let i=0; i<numTiles; ++i)
+              if (!(Array.isArray(srcCable[i].video) && srcCable[1].video.length > 0))
+                return Promise.reject(`Input wire ${i} does not contain video`);
+
+            const srcTags = cable[0].video[0].tags;
+            srcCable.forEach((s, i) =>
+              srcIDs.push({ flowID: srcCable[i]['video'][0].flowID, sourceID: srcCable[i]['video'][0].sourceID }));
+                
             const dstTags = JSON.parse(JSON.stringify(srcTags));
             dstTags.width = config.dstWidth;
             dstTags.height = config.dstHeight;
@@ -230,19 +239,32 @@ module.exports = function (RED) {
               
             dstBufLen = stamper.setInfo(srcTags, dstTags, logLevel);
             multiview = new multiviewSlots(numTiles, maxQueue, dstBufLen);
+            return x;
           });
 
-        nextJob.then(() => {
-          const grainFlowId = uuid.unparse(x.flow_id);
-          const slotNum = checkSrcFlowIds(grainFlowId);
-          processGrain(x, slotNum, push, next);
+        nextJob.then(x => {
+          if (setupError) {
+            push(setupError);
+            return next(redioactive.noTiming);
+          } else {
+            const grainFlowID = uuid.unparse(x.flow_id);
+            const grainSourceID = uuid.unparse(x.source_id);
+            if (srcIDs.find(id => (grainFlowID === id.flowID) && (grainSourceID === id.sourceID))) {
+              const slotNum = checkSrcFlowIds(grainFlowID);
+              return processGrain(x, slotNum, push, next);
+            } else {
+              console.log(`Dropping grain with flowID ${grainFlowID}`);
+              return next(redioactive.noTiming);
+            }
+          } 
         }).catch(err => {
+          setupError = err;
           push(err);
-          next();
+          next(redioactive.noTiming);
         });
       } else {
         push(null, x);
-        next();
+        next(redioactive.noTiming);
       }
     });
     this.on('close', this.close);
