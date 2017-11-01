@@ -15,21 +15,29 @@
 -->
 
 <script type="text/javascript">
-    RED.nodes.registerType('decoder',{
-      category: 'valve',
-      color: '#A09D45',
-      defaults: {
-        name: { value : ""},
-        maxBuffer : { value : 10, validate : RED.validators.number() },
-        description : { value : "" }
-      },
-      inputs:1,
-      outputs:1,
-      icon: "valve.png",
-      label: function() {
-        return this.name || "decoder";
-      }
-    });
+  RED.nodes.registerType('decoder', {
+    category: 'valve',
+    color: '#A09D45',
+    defaults: {
+      name: { value : ""},
+      maxBuffer : { value : 10, validate : RED.validators.number() },
+      description : { value : "" },
+      dashboard: { value: false },
+      outputs: { value: 1 }
+    },
+    inputs:1,
+    outputs:1,
+    icon: "valve.png",
+    label: function() {
+      return this.name || "decoder";
+    },
+
+    oneditprepare: function() {
+      $("#node-input-dashboard").prop("checked", this.dashboard);
+      $("#node-input-dashboard").change(() =>
+        $("#node-input-outputs").val($("#node-input-dashboard").prop("checked")?2:1));
+    }
+  });
 </script>
 
 <script type="text/x-red" data-template-name="decoder">
@@ -46,13 +54,21 @@
     <label for="node-input-maxBuffer"><i class="fa fa-suitcase"></i> max buffer</label>
     <input type="number" id="node-input-maxBuffer" placeholder="10" style="width: 100px">
   </div>
+  <div class="form-row">
+    <label for "node-input-dashboard"><i class="fa fa-line-chart"></i> dashboard</label>
+    <input type="checkbox" id="node-input-dashboard" style="margin-left: 0px; vertical-align: top; width: auto">
+  </div>
+  <div class="form-row hidden">
+    <label for="node-input-outputs"> outputs</label>
+    <input type="number" min="1" id="node-input-outputs" placeholder="1">
+  </div>
 </script>
 
 <style>
-.param-table table, th, td {
-  vertical-align: top;
-  padding: 3px;
-}
+  .param-table table, th, td {
+    vertical-align: top;
+    padding: 3px;
+  }
 </style>
 
 <script type="text/x-red" data-help-name="decoder">
@@ -76,6 +92,10 @@
    <tr>
     <td><i class="fa fa-suitcase"></i> max buffer</td>
     <td>Maximum number of grains to buffer before overflowing.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-line-chart"></i> dashboard</td>
+    <td>Adds an extra output pin at the bottom with dashboard data designed to be wired to a chart node.</td>
    </tr>
   </table>
   </div>
