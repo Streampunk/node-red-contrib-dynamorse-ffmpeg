@@ -100,21 +100,21 @@ function ValveCommon (RED, config) {
             return this.doProcess (x, dstBufLen, push, next);
           else if (passthruFlowIDs.find(id => (grainFlowID === id.flowID) && (grainSourceID === id.sourceID))) {
             push(null, x);
-            return next();
+            return next(redioactive.noTiming);
           } 
           else {
             console.log(`Dropping grain with flowID ${grainFlowID}`);
-            return next();
+            return next(redioactive.noTiming);
           }
         }
       }).catch(err => {
         setupError = err;
         push(err);
-        next();
+        next(redioactive.noTiming);
       });
     } else {
       push(null, x);
-      next();
+      next(redioactive.noTiming);
     }
   });
 
