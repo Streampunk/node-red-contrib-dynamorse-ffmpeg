@@ -190,7 +190,7 @@ module.exports = function (RED) {
     this.consume((err, x, push, next) => {
       if (err) {
         push(err);
-        next();
+        next(redioactive.noTiming);
       } else if (redioactive.isEnd(x)) {
         if (srcCable && (srcCable.length === ++numEnds)) {
           stamper.quit(() => {
@@ -201,6 +201,9 @@ module.exports = function (RED) {
         const nextJob = (cableChecked) ?
           Promise.resolve(x) :
           this.findCable(x).then(cable => {
+            if (cableChecked)
+              return x;
+
             cableChecked = true;
             srcCable = cable.filter((c, i) => i < numTiles);
             if (srcCable.length < numTiles)

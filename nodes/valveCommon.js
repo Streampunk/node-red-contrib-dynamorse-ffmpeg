@@ -44,7 +44,7 @@ function ValveCommon (RED, config) {
   this.consume((err, x, push, next) => {
     if (err) {
       push(err);
-      next();
+      next(redioactive.noTiming);
     } else if (redioactive.isEnd(x)) {
       this.quit(() => {
         push(null, x);
