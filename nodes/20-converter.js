@@ -46,8 +46,8 @@ module.exports = function (RED) {
 
     this.makeDstTags = srcTags => {
       const dstTags = JSON.parse(JSON.stringify(srcTags));
-      dstTags.width = config.dstWidth;
-      dstTags.height = config.dstHeight;
+      dstTags.width = +config.dstWidth;
+      dstTags.height = +config.dstHeight;
       dstTags.packing = config.dstFormat;
       if ('420P' === config.dstFormat) {
         dstTags.depth = 8;
@@ -71,7 +71,7 @@ module.exports = function (RED) {
 
     this.setInfo = (srcTags, dstTags, duration, logLevel) => {
       const scaleTags = {};
-      scaleTags.scale = [ config.scaleX, config.scaleY ];
+      scaleTags.scale = [ +config.scaleX, +config.scaleY ];
       scaleTags.dstOffset = [ 0, 0 ];
 
       return converter.setInfo(srcTags, dstTags, scaleTags, logLevel);
