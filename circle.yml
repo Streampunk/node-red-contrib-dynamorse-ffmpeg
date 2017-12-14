@@ -5,8 +5,6 @@ machine:
     UV_THREADPOOL_SIZE: 16
 
 dependencies:
-  pre:
-    - npm install tape
   post:
     - npm install -g tap-xunit
     - npm install -g node-red
