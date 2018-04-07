@@ -22,7 +22,7 @@ jobs:
         - v1-dep-master-
         # Any branch if there are none on the default branch - this should be unnecessary if you have your default branch configured correctly
         - v1-dep-
-    - run: npm install
+    - run: npm install --ignore-scripts
     - run: npm install tap-xunit
     - run: npm install node-red
     - run: npm install pm2
@@ -35,7 +35,7 @@ jobs:
         - ./node_modules
         - ~/.node_red
     - run: echo 'export PATH="~/Streampunk/node-red-contrib-dynamorse-ffmpeg/node_modules/.bin:$PATH"' >> $BASH_ENV
-    - run: pm2 start node-red -- -u ~/.node-red
+    - run: pm2 start node_modules/.bin/node-red -- -u ~/.node-red
     - run: sleep 2 ; node ~/.node-red/node_modules/node-red-contrib-dynamorse-core/scripts/dynamorse-setup.js
     - run: mkdir -p $CIRCLE_TEST_REPORTS/eslint
     - run: mkdir -p $CIRCLE_TEST_REPORTS/xunit
