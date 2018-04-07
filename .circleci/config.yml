@@ -22,13 +22,13 @@ jobs:
         - v1-dep-master-
         # Any branch if there are none on the default branch - this should be unnecessary if you have your default branch configured correctly
         - v1-dep-
-    - run: sudo npm link
+    - run: npm install
     - run: npm install tap-xunit
     - run: npm install node-red
     - run: npm install pm2
     - run: mkdir ~/.node-red
     - run: cd ~/.node-red; npm install node-red-contrib-dynamorse-core
-    - run: cd ~/.node-red; npm link node-red-contrib-dynamorse-http-io
+    - run: cd ~/.node-red/node_modules; ln -s ~/Streampunk/node-red-contrib-dynamorse-ffmpeg
     - save_cache:
         key: v1-dep-{{ .Branch }}-{{ epoch }}
         paths:
