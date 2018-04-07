@@ -8,13 +8,13 @@
     "node-red"
   ],
   "dependencies": {
-    "codecadon": "^0.1.15",
+    "codecadon": "^0.1.17",
     "uuid": "^2.0.1"
   },
   "devDependencies": {
     "dynamorse-test": "^0.2.0",
-    "eslint": "^4.13.1",
-    "tape": "^4.8.0"
+    "eslint": "^4.19.1",
+    "tape": "^4.9.0"
   },
   "scripts": {
     "test": "tape test/*Spec.js",
