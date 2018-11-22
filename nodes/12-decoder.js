@@ -57,9 +57,7 @@ module.exports = function (RED) {
       decoder.quit(() => cb());
     };
 
-    this.closeValve = done => {
-      this.close(done);
-    };
+    this.closeValve = () => {};
   }
 
   util.inherits(Decoder, ValveCommon);

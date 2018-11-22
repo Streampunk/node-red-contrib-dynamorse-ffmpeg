@@ -63,9 +63,7 @@ module.exports = function (RED) {
       packer.quit(() => cb());
     };
 
-    this.closeValve = done => {
-      this.close(done);
-    };
+    this.closeValve = () => {};
   }
 
   util.inherits(Packer, ValveCommon);

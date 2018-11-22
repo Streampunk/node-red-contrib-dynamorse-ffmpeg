@@ -83,9 +83,7 @@ module.exports = function (RED) {
       encoder.quit(() => cb());
     };
 
-    this.closeValve = done => {
-      this.close(done);
-    };
+    this.closeValve = () => {};
   }
   util.inherits(AACEncoder, ValveCommon);
   RED.nodes.registerType('AAC encoder', AACEncoder);

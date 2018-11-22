@@ -118,7 +118,10 @@ function ValveCommon (RED, config) {
     }
   });
 
-  this.on('close', this.closeValve);
+  this.on('close', done => {
+    this.closeValve();
+    done();
+  });
 }
 util.inherits(ValveCommon, redioactive.Valve);
 

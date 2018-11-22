@@ -89,10 +89,7 @@ module.exports = function (RED) {
       converter.quit(() => cb());
     };
 
-    this.closeValve = done => {
-      this.close(done);
-    };
-
+    this.closeValve = () => {};
   }
 
   util.inherits(Converter, ValveCommon);

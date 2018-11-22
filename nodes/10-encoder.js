@@ -61,9 +61,7 @@ module.exports = function (RED) {
       encoder.quit(() => cb());
     };
 
-    this.closeValve = done => {
-      this.close(done);
-    };
+    this.closeValve = () => {};
   }
 
   util.inherits(Encoder, ValveCommon);

@@ -270,7 +270,7 @@ module.exports = function (RED) {
         next(redioactive.noTiming);
       }
     });
-    this.on('close', this.close);
+    this.on('close', done => done());
   }
   util.inherits(Multiviewer, redioactive.Valve);
   RED.nodes.registerType('multiviewer', Multiviewer);
